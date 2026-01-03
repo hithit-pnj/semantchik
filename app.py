@@ -1,11 +1,12 @@
 # app.py
-# Application web Semantix - Jeu multijoueur de devinette sémantique
+# Application web Semantix - Version TEST avec timers et points dynamiques
 
 import os
 import json
 import random
 import string
 import unicodedata
+import time
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
@@ -20,6 +21,12 @@ CORS(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "data", "game_data.json")
 
+# === PARAMÈTRES DE JEU (MODIFIABLES) ===
+ROUND_TIME_LIMIT = 300      # 5 minutes max par mot
+TURN_TIME_LIMIT = 15        # 15 secondes par tour
+PENALTY_THRESHOLD = 1000    # Rang au-delà duquel on perd des points
+TIMEOUT_PENALTY = -1        # Pénalité si on ne répond pas à temps
+
 # ======================
 # Chargement des données pré-calculées
 # ======================
@@ -29,7 +36,7 @@ with open(DATA_FILE, "r", encoding="utf-8") as f:
 
 TARGETS = GAME_DATA["targets"]
 RANKS = GAME_DATA["ranks"]
-print(f"✓ {len(TARGETS)} mots cibles disponibles")
+print(f"[OK] {len(TARGETS)} mots cibles disponibles")
 
 # ======================
 # Stockage des parties en mémoire
@@ -51,7 +58,7 @@ def generate_code():
     return ''.join(random.choices(string.ascii_uppercase, k=4))
 
 def calculate_points(rank):
-    """Calcule les points selon le rang."""
+    """Calcule les points selon le rang - avec pénalités !"""
     if rank == 1:
         return 100
     elif rank <= 10:
@@ -62,7 +69,11 @@ def calculate_points(rank):
         return 5
     elif rank <= 500:
         return 2
-    return 0
+    elif rank <= 1000:
+        return 0
+    else:
+        # PÉNALITÉ : -1 point si trop loin !
+        return -1
 
 def get_indicator(rank):
     """Retourne l'indicateur visuel selon le rang."""
@@ -76,7 +87,48 @@ def get_indicator(rank):
         return "☀️"
     elif rank <= 500:
         return "🌤️"
-    return "❄️"
+    elif rank <= 1000:
+        return "❄️"
+    else:
+        return "💀"  # Pénalité !
+
+def get_remaining_round_time(game):
+    """Retourne le temps restant pour ce mot (en secondes)."""
+    elapsed = time.time() - game['round_start_time']
+    remaining = max(0, ROUND_TIME_LIMIT - elapsed)
+    return int(remaining)
+
+def get_remaining_turn_time(game):
+    """Retourne le temps restant pour ce tour (en secondes)."""
+    elapsed = time.time() - game['turn_start_time']
+    remaining = max(0, TURN_TIME_LIMIT - elapsed)
+    return int(remaining)
+
+def check_and_advance_turn(game):
+    """Vérifie si le temps du tour est écoulé et passe au suivant si besoin."""
+    if get_remaining_turn_time(game) <= 0 and not game['found'] and not game.get('advancing_turn', False):
+        # Marquer qu'on avance le tour pour éviter les appels multiples
+        game['advancing_turn'] = True
+        
+        # Temps écoulé, pénalité pour le joueur actuel
+        current = game['current_player']
+        game['scores'][current] = game['scores'].get(current, 0) + TIMEOUT_PENALTY
+        game['last_timeout_player'] = current
+        
+        # Passer au joueur suivant
+        num_players = len(game['players'])
+        game['current_player'] = (game['current_player'] % num_players) + 1
+        game['turn_start_time'] = time.time()
+        game['turn_skipped'] = True
+        
+        # Déverrouiller après un petit délai
+        game['advancing_turn'] = False
+        return True
+    return False
+
+def check_round_timeout(game):
+    """Vérifie si le temps du mot est écoulé."""
+    return get_remaining_round_time(game) <= 0 and not game['found']
 
 # ======================
 # Routes
@@ -98,6 +150,7 @@ def create_game():
     
     # Choisir un mot secret
     secret_word = random.choice(TARGETS)
+    now = time.time()
     
     # Créer la partie
     games[code] = {
@@ -108,14 +161,20 @@ def create_game():
         'current_player': 1,
         'found': False,
         'winner': None,
-        'created_at': datetime.now().isoformat()
+        'created_at': datetime.now().isoformat(),
+        'round_start_time': now,
+        'turn_start_time': now,
+        'turn_skipped': False,
+        'round_timeout': False,
+        'started': False  # La partie n'est pas encore lancée
     }
     
     return jsonify({
         'success': True,
         'code': code,
         'player_id': 1,
-        'hint': len(secret_word)
+        'round_time_limit': ROUND_TIME_LIMIT,
+        'turn_time_limit': TURN_TIME_LIMIT
     })
 
 @app.route('/api/join', methods=['POST'])
@@ -145,8 +204,42 @@ def join_game():
         'success': True,
         'code': code,
         'player_id': player_id,
-        'hint': len(game['secret_word']),
-        'players': game['players']
+        'players': game['players'],
+        'round_time_limit': ROUND_TIME_LIMIT,
+        'turn_time_limit': TURN_TIME_LIMIT
+    })
+
+@app.route('/api/start', methods=['POST'])
+def start_game():
+    """Démarre officiellement la partie (lance les timers)."""
+    data = request.json
+    code = data.get('code', '').upper()
+    
+    if code not in games:
+        return jsonify({'success': False, 'error': 'Partie non trouvée'})
+    
+    game = games[code]
+    now = time.time()
+    game['round_start_time'] = now
+    game['turn_start_time'] = now
+    game['started'] = True  # Marquer la partie comme démarrée
+    
+    return jsonify({'success': True})
+
+@app.route('/api/lobby/<code>')
+def get_lobby_state(code):
+    """Récupère l'état du lobby (pour synchroniser le démarrage)."""
+    code = code.upper()
+    
+    if code not in games:
+        return jsonify({'success': False, 'error': 'Partie non trouvée'})
+    
+    game = games[code]
+    
+    return jsonify({
+        'success': True,
+        'players': game['players'],
+        'started': game.get('started', False)
     })
 
 @app.route('/api/guess', methods=['POST'])
@@ -162,8 +255,21 @@ def make_guess():
     
     game = games[code]
     
+    # Vérifier timeout du mot
+    if check_round_timeout(game):
+        game['round_timeout'] = True
+        return jsonify({
+            'success': False, 
+            'error': 'Temps écoulé pour ce mot !',
+            'timeout': True,
+            'secret_word': game['secret_word']
+        })
+    
     if game['found']:
         return jsonify({'success': False, 'error': 'Partie terminée'})
+    
+    # Vérifier et avancer le tour si timeout
+    check_and_advance_turn(game)
     
     if game['current_player'] != player_id:
         return jsonify({'success': False, 'error': "Ce n'est pas votre tour"})
@@ -211,9 +317,10 @@ def make_guess():
         game['found'] = True
         game['winner'] = player_id
     else:
-        # Passer au joueur suivant
+        # Passer au joueur suivant et reset le timer du tour
         num_players = len(game['players'])
         game['current_player'] = (player_id % num_players) + 1
+        game['turn_start_time'] = time.time()
     
     return jsonify({
         'success': True,
@@ -225,6 +332,25 @@ def make_guess():
         'secret_word': game['secret_word'] if found else None
     })
 
+@app.route('/api/skip_turn', methods=['POST'])
+def skip_turn():
+    """Force le passage au joueur suivant (appelé par le client si timeout)."""
+    data = request.json
+    code = data.get('code', '').upper()
+    
+    if code not in games:
+        return jsonify({'success': False, 'error': 'Partie non trouvée'})
+    
+    game = games[code]
+    
+    if game['found']:
+        return jsonify({'success': False, 'error': 'Partie terminée'})
+    
+    # Ne rien faire si le tour a déjà été avancé par le serveur
+    # Le serveur gère tout via check_and_advance_turn dans get_state
+    
+    return jsonify({'success': True, 'current_player': game['current_player']})
+
 @app.route('/api/state/<code>')
 def get_state(code):
     """Récupère l'état actuel de la partie."""
@@ -234,6 +360,10 @@ def get_state(code):
         return jsonify({'success': False, 'error': 'Partie non trouvée'})
     
     game = games[code]
+    
+    # Vérifier les timeouts
+    round_timeout = check_round_timeout(game)
+    turn_skipped = check_and_advance_turn(game)
     
     # Trier les tentatives par rang
     sorted_guesses = sorted(game['guesses'], key=lambda x: x['rank'])
@@ -246,8 +376,11 @@ def get_state(code):
         'current_player': game['current_player'],
         'found': game['found'],
         'winner': game['winner'],
-        'secret_word': game['secret_word'] if game['found'] else None,
-        'hint': len(game['secret_word'])
+        'secret_word': game['secret_word'] if (game['found'] or round_timeout) else None,
+        'round_remaining': get_remaining_round_time(game),
+        'turn_remaining': get_remaining_turn_time(game),
+        'round_timeout': round_timeout,
+        'turn_skipped': turn_skipped
     })
 
 @app.route('/api/new_round', methods=['POST'])
@@ -260,6 +393,7 @@ def new_round():
         return jsonify({'success': False, 'error': 'Partie non trouvée'})
     
     game = games[code]
+    now = time.time()
     
     # Nouveau mot secret
     game['secret_word'] = random.choice(TARGETS)
@@ -267,17 +401,24 @@ def new_round():
     game['current_player'] = 1
     game['found'] = False
     game['winner'] = None
+    game['round_start_time'] = now
+    game['turn_start_time'] = now
+    game['round_timeout'] = False
+    game['turn_skipped'] = False
     # Garder les scores !
     
     return jsonify({
         'success': True,
-        'hint': len(game['secret_word'])
+        'round_time_limit': ROUND_TIME_LIMIT,
+        'turn_time_limit': TURN_TIME_LIMIT
     })
 
 # ======================
 # Lancement
 # ======================
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))  # Port 5001 pour le test
+    print(f"\n[TEST] MODE TEST - Port {port}")
+    print(f"   Timer mot: {ROUND_TIME_LIMIT}s | Timer tour: {TURN_TIME_LIMIT}s")
+    print(f"   Penalite rang > {PENALTY_THRESHOLD}: -1pt | Timeout: {TIMEOUT_PENALTY}pt\n")
     app.run(host='0.0.0.0', port=port, debug=True)
-

@@ -3,14 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semantchikx</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Semantix</title>
+    <style>
+        :root {
+            --bg: #0d0d12;
+            --card: #16161d;
+            --border: #2a2a35;
+            --accent: #5c9eff;
+            --accent-soft: #3d6db3;
+            --danger: #e05555;
+            --warning: #d4a054;
+            --text: #e0e0e0;
+            --dim: #6a6a7a;
+            --hot: #c75050;
+            --warm: #b8864a;
+            --cool: #5a8fc7;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 16px 0;
+        }
+        
+        h2 { color: var(--text); margin-bottom: 16px; font-size: 1.1rem; font-weight: 500; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+        
+        input:focus { outline: none; border-color: var(--accent-soft); }
+        input::placeholder { color: var(--dim); }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        
+        .code-display {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .code-display .label { color: var(--dim); font-size: 0.85rem; margin-bottom: 8px; }
+        .code-display .code {
+            font-size: 2.2rem;
+            font-weight: 600;
+            letter-spacing: 6px;
+            color: var(--accent);
+        }
+        
+        /* === ROUND TIMER (global) === */
+        .round-timer-bar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .round-timer-bar .label {
+            font-size: 0.85rem;
+            color: var(--dim);
+        }
+        
+        .round-timer-bar .time {
+            font-size: 1.4rem;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            color: var(--text);
+        }
+        
+        .round-timer-bar.warning .time { color: var(--warning); }
+        .round-timer-bar.danger .time { color: var(--danger); }
+        
+        /* === SCORES avec timer intégré === */
+        .scores {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .score-box {
+            flex: 1;
+            min-width: 100px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        
+        .score-box.active-turn {
+            border-color: var(--accent);
+            background: rgba(92, 158, 255, 0.06);
+        }
+        
+        .score-box .name { 
+            font-size: 0.9rem; 
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .score-box .pts { 
+            font-size: 1.4rem; 
+            font-weight: 600; 
+            color: var(--text); 
+        }
+        
+        .score-box .pts.negative { color: var(--danger); }
+        
+        /* Timer sous le joueur actif */
+        .score-box .turn-timer {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .score-box.active-turn .turn-timer {
+            display: block;
+        }
+        
+        .score-box .turn-timer .timer-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+        }
+        
+        .score-box .turn-timer.warning .timer-value { color: var(--warning); }
+        .score-box .turn-timer.danger .timer-value { color: var(--danger); }
+        
+        /* === GUESS FORM === */
+        .guess-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .guess-form input { flex: 1; margin-bottom: 0; }
+        .guess-form .btn { width: auto; padding: 12px 24px; }
+        
+        .error-msg {
+            background: rgba(224, 85, 85, 0.15);
+            color: var(--danger);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: none;
+            font-size: 0.9rem;
+        }
+        
+        .error-msg.show { display: block; }
+        
+        /* === BOARD === */
+        .board {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        
+        .board-header {
+            color: var(--dim);
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .guess-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg);
+            border-radius: 6px;
+            margin: 6px 0;
+            border-left: 3px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        
+        .guess-row.hot { border-color: var(--hot); }
+        .guess-row.warm { border-color: var(--warm); }
+        .guess-row.cool { border-color: var(--cool); }
+        .guess-row.penalty { border-color: var(--danger); background: rgba(224,85,85,0.08); }
+        
+        /* Animation pour le dernier mot */
+        .guess-row.latest {
+            background: rgba(92, 158, 255, 0.12);
+            border-left-width: 4px;
+            animation: slideIn 0.4s ease-out, pulse 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(92, 158, 255, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(92, 158, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(92, 158, 255, 0); }
+        }
+        
+        .guess-row .attempt-num {
+            font-size: 0.75rem;
+            color: var(--dim);
+            min-width: 28px;
+            margin-right: 8px;
+        }
+        
+        .guess-row .icon { font-size: 1rem; margin-right: 10px; }
+        .guess-row .rank { font-weight: 600; min-width: 60px; font-size: 0.9rem; color: var(--dim); }
+        .guess-row .word { flex: 1; font-weight: 500; }
+        .guess-row .player { color: var(--dim); font-size: 0.8rem; margin-right: 10px; }
+        .guess-row .points { font-weight: 600; color: var(--accent); font-size: 0.9rem; }
+        .guess-row .points.negative { color: var(--danger); }
+        
+        .empty-msg {
+            text-align: center;
+            color: var(--dim);
+            padding: 30px;
+            font-size: 0.9rem;
+        }
+        
+        /* === MODAL === */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 32px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 360px;
+        }
+        
+        .modal-box h2 { font-size: 1.4rem; margin-bottom: 8px; font-weight: 500; }
+        .modal-box .secret { font-size: 2rem; color: var(--accent); margin: 16px 0; font-weight: 600; }
+        .modal-box .winner { color: var(--dim); margin-bottom: 20px; font-size: 0.9rem; }
+        .modal-box .btn { margin-top: 10px; }
+        
+        .modal-box.timeout h2 { color: var(--danger); }
+        
+        /* === PLAYER LIST === */
+        .player-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 6px 0;
+        }
+        
+        .player-item .num {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 12px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Semantchikx</h1>
-            <p class="subtitle"></p>
+            <h1>Semantix</h1>
         </header>
         
         <!-- Menu -->
@@ -25,7 +362,7 @@
                 <h2>Rejoindre</h2>
                 <input type="text" id="join-code" placeholder="Code (ex: ABCD)" maxlength="4" style="text-transform: uppercase;">
                 <input type="text" id="join-name" placeholder="Pseudo" maxlength="15">
-                <button class="btn" onclick="joinGame()">Rejoindre</button>
+                <button class="btn btn-secondary" onclick="joinGame()">Rejoindre</button>
             </div>
             
             <div id="menu-error" class="error-msg"></div>
@@ -40,10 +377,10 @@
                     <div class="code" id="lobby-code">----</div>
                 </div>
                 
-                <h2 style="margin-top: 24px;">Joueurs</h2>
+                <h2 style="margin-top: 20px;">Joueurs</h2>
                 <div id="lobby-players"></div>
                 
-                <button class="btn btn-primary" onclick="startGame()" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="startGame()" style="margin-top: 16px;">
                     Commencer
                 </button>
             </div>
@@ -51,14 +388,13 @@
         
         <!-- Jeu -->
         <div id="game-screen" class="screen">
-            <div class="game-stats">
-                <div class="stat-box">
-                    <div class="label">Essais</div>
-                    <div class="value" id="guess-count">0</div>
-                </div>
-                <div id="turn-indicator" class="turn-box active">Votre tour</div>
+            <!-- Timer global du mot -->
+            <div class="round-timer-bar" id="round-timer">
+                <span class="label">Temps restant pour ce mot</span>
+                <span class="time" id="round-time">5:00</span>
             </div>
             
+            <!-- Scores avec timer intégré sous le joueur actif -->
             <div class="scores" id="scores-bar"></div>
             
             <div class="guess-form">
@@ -69,21 +405,32 @@
             <div id="guess-error" class="error-msg"></div>
             
             <div class="board">
-                <div class="board-header">Tentatives triées par proximité</div>
+                <div class="board-header">Tentatives triées par proximité · Rang > 1000 ou timeout = -1 pt</div>
                 <div class="board-content" id="guesses-list">
                     <div class="empty-msg">Aucune tentative pour l'instant</div>
                 </div>
             </div>
         </div>
         
-        <!-- Modal -->
+        <!-- Modal Victoire -->
         <div id="win-modal" class="modal">
             <div class="modal-box">
                 <h2>Trouvé !</h2>
                 <div class="secret" id="modal-secret">---</div>
                 <div class="winner" id="modal-winner">Bravo !</div>
                 <button class="btn btn-primary" onclick="newRound()">Nouvelle manche</button>
-                <button class="btn" onclick="backToMenu()">Menu</button>
+                <button class="btn btn-secondary" onclick="backToMenu()">Menu</button>
+            </div>
+        </div>
+        
+        <!-- Modal Timeout -->
+        <div id="timeout-modal" class="modal">
+            <div class="modal-box timeout">
+                <h2>Temps écoulé</h2>
+                <div class="secret" id="timeout-secret">---</div>
+                <div class="winner">Personne n'a trouvé à temps</div>
+                <button class="btn btn-primary" onclick="newRound()">Mot suivant</button>
+                <button class="btn btn-secondary" onclick="backToMenu()">Menu</button>
             </div>
         </div>
     </div>
@@ -93,6 +440,11 @@
         let playerId = null;
         let playerName = null;
         let pollInterval = null;
+        let lobbyPollInterval = null;
+        let roundTimeLimit = 300;
+        let turnTimeLimit = 15;
+        let currentPlayer = 1;
+        let lastGuessCount = 0;
         
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -104,6 +456,12 @@
             el.textContent = msg;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 3000);
+        }
+        
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${s}`;
         }
         
         async function createGame() {
@@ -121,9 +479,12 @@
                 if (data.success) {
                     gameCode = data.code;
                     playerId = data.player_id;
+                    roundTimeLimit = data.round_time_limit;
+                    turnTimeLimit = data.turn_time_limit;
                     document.getElementById('lobby-code').textContent = gameCode;
                     updateLobbyPlayers({ 1: name });
                     showScreen('lobby-screen');
+                    startLobbyPolling();
                 } else {
                     showError('menu-error', data.error);
                 }
@@ -153,9 +514,12 @@
                 if (data.success) {
                     gameCode = data.code;
                     playerId = data.player_id;
+                    roundTimeLimit = data.round_time_limit;
+                    turnTimeLimit = data.turn_time_limit;
                     document.getElementById('lobby-code').textContent = gameCode;
                     updateLobbyPlayers(data.players);
                     showScreen('lobby-screen');
+                    startLobbyPolling();
                 } else {
                     showError('menu-error', data.error);
                 }
@@ -177,7 +541,50 @@
             }
         }
         
-        function startGame() {
+        async function refreshLobby() {
+            if (!gameCode) return;
+            
+            try {
+                const res = await fetch(`/api/lobby/${gameCode}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    updateLobbyPlayers(data.players);
+                    
+                    if (data.started) {
+                        stopLobbyPolling();
+                        showScreen('game-screen');
+                        startPolling();
+                        document.getElementById('guess-input').focus();
+                    }
+                }
+            } catch (e) {
+                console.error('Erreur lobby refresh', e);
+            }
+        }
+        
+        function startLobbyPolling() {
+            stopLobbyPolling();
+            refreshLobby();
+            lobbyPollInterval = setInterval(refreshLobby, 1500);
+        }
+        
+        function stopLobbyPolling() {
+            if (lobbyPollInterval) {
+                clearInterval(lobbyPollInterval);
+                lobbyPollInterval = null;
+            }
+        }
+        
+        async function startGame() {
+            stopLobbyPolling();
+            
+            await fetch('/api/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: gameCode })
+            });
+            
             showScreen('game-screen');
             startPolling();
             document.getElementById('guess-input').focus();
@@ -201,7 +608,11 @@
                     refreshState();
                     if (data.found) showWinModal(data.secret_word);
                 } else {
-                    showError('guess-error', data.error);
+                    if (data.timeout) {
+                        showTimeoutModal(data.secret_word);
+                    } else {
+                        showError('guess-error', data.error);
+                    }
                 }
             } catch (e) {
                 showError('guess-error', 'Erreur de connexion');
@@ -216,8 +627,12 @@
                 const data = await res.json();
                 
                 if (data.success) {
+                    currentPlayer = data.current_player;
                     updateGameUI(data);
-                    if (data.found && !document.getElementById('win-modal').classList.contains('active')) {
+                    
+                    if (data.round_timeout && !document.getElementById('timeout-modal').classList.contains('active')) {
+                        showTimeoutModal(data.secret_word);
+                    } else if (data.found && !document.getElementById('win-modal').classList.contains('active')) {
                         showWinModal(data.secret_word, data.players[data.winner]);
                     }
                 }
@@ -227,50 +642,92 @@
         }
         
         function updateGameUI(data) {
-            document.getElementById('guess-count').textContent = data.guesses.length;
+            // Timer global du mot
+            const roundEl = document.getElementById('round-time');
+            const roundBar = document.getElementById('round-timer');
+            roundEl.textContent = formatTime(data.round_remaining);
+            roundBar.classList.remove('warning', 'danger');
+            if (data.round_remaining <= 30) roundBar.classList.add('danger');
+            else if (data.round_remaining <= 60) roundBar.classList.add('warning');
             
-            const turnEl = document.getElementById('turn-indicator');
-            if (data.current_player === playerId) {
-                turnEl.textContent = 'Votre tour';
-                turnEl.classList.add('active');
-                document.getElementById('guess-input').disabled = false;
-            } else {
-                turnEl.textContent = `Tour: ${data.players[data.current_player]}`;
-                turnEl.classList.remove('active');
-                document.getElementById('guess-input').disabled = true;
-            }
+            // Input activé/désactivé
+            const isMyTurn = data.current_player === playerId;
+            document.getElementById('guess-input').disabled = !isMyTurn;
             
+            // Scores avec timer intégré sous le joueur actif
             const scoresBar = document.getElementById('scores-bar');
             scoresBar.innerHTML = '';
             for (const [id, name] of Object.entries(data.players)) {
                 const score = data.scores[id] || 0;
-                const isCurrent = parseInt(id) === playerId;
+                const isActiveTurn = parseInt(id) === data.current_player;
+                const negativeClass = score < 0 ? 'negative' : '';
+                const isMe = parseInt(id) === playerId;
+                
+                let timerClass = '';
+                if (data.turn_remaining <= 5) timerClass = 'danger';
+                else if (data.turn_remaining <= 8) timerClass = 'warning';
+                
                 scoresBar.innerHTML += `
-                    <div class="score-box${isCurrent ? ' me' : ''}">
-                        <div class="name">${name}</div>
-                        <div class="pts">${score}</div>
+                    <div class="score-box${isActiveTurn ? ' active-turn' : ''}">
+                        <div class="name">${name}${isMe ? ' (vous)' : ''}</div>
+                        <div class="pts ${negativeClass}">${score} pts</div>
+                        <div class="turn-timer ${timerClass}">
+                            <div class="timer-value">${data.turn_remaining}s</div>
+                        </div>
                     </div>
                 `;
             }
             
+            // Détecter si nouveau mot ajouté
+            const newGuessAdded = data.guesses.length > lastGuessCount;
+            lastGuessCount = data.guesses.length;
+            
+            // Trouver le dernier mot ajouté (par ordre d'insertion, pas de rang)
+            let latestWord = null;
+            if (data.guesses.length > 0) {
+                // On garde le dernier mot ajouté en mémoire
+                latestWord = data.guesses[data.guesses.length - 1].word;
+            }
+            
+            // Liste des tentatives
             const guessesList = document.getElementById('guesses-list');
             if (data.guesses.length === 0) {
                 guessesList.innerHTML = '<div class="empty-msg">Aucune tentative pour l\'instant</div>';
             } else {
                 guessesList.innerHTML = '';
+                
+                // Créer une map pour l'ordre d'insertion
+                const insertionOrder = {};
+                data.guesses.forEach((g, idx) => {
+                    if (!insertionOrder[g.word]) {
+                        insertionOrder[g.word] = Object.keys(insertionOrder).length + 1;
+                    }
+                });
+                
                 for (const g of data.guesses) {
                     let tempClass = '';
                     if (g.rank <= 10) tempClass = 'hot';
                     else if (g.rank <= 50) tempClass = 'warm';
                     else if (g.rank <= 500) tempClass = 'cool';
+                    else if (g.rank > 1000) tempClass = 'penalty';
+                    
+                    const isLatest = newGuessAdded && g.word === latestWord;
+                    const latestClass = isLatest ? ' latest' : '';
+                    
+                    const pointsClass = g.points < 0 ? 'negative' : '';
+                    const pointsPrefix = g.points >= 0 ? '+' : '';
+                    
+                    // Trouver le numéro de tentative
+                    const attemptNum = insertionOrder[g.word];
                     
                     guessesList.innerHTML += `
-                        <div class="guess-row ${tempClass}">
+                        <div class="guess-row ${tempClass}${latestClass}">
+                            <span class="attempt-num">#${attemptNum}</span>
                             <span class="icon">${g.indicator}</span>
-                            <span class="rank">#${g.rank}</span>
+                            <span class="rank">${g.rank}</span>
                             <span class="word">${g.word}</span>
                             <span class="player">${g.player_name}</span>
-                            <span class="points">+${g.points}</span>
+                            <span class="points ${pointsClass}">${pointsPrefix}${g.points}</span>
                         </div>
                     `;
                 }
@@ -285,6 +742,12 @@
             stopPolling();
         }
         
+        function showTimeoutModal(secretWord) {
+            document.getElementById('timeout-secret').textContent = secretWord;
+            document.getElementById('timeout-modal').classList.add('active');
+            stopPolling();
+        }
+        
         async function newRound() {
             try {
                 const res = await fetch('/api/new_round', {
@@ -296,6 +759,8 @@
                 
                 if (data.success) {
                     document.getElementById('win-modal').classList.remove('active');
+                    document.getElementById('timeout-modal').classList.remove('active');
+                    lastGuessCount = 0;
                     startPolling();
                     refreshState();
                 }
@@ -306,16 +771,19 @@
         
         function backToMenu() {
             document.getElementById('win-modal').classList.remove('active');
+            document.getElementById('timeout-modal').classList.remove('active');
             stopPolling();
+            stopLobbyPolling();
             gameCode = null;
             playerId = null;
+            lastGuessCount = 0;
             showScreen('menu-screen');
         }
         
         function startPolling() {
             stopPolling();
             refreshState();
-            pollInterval = setInterval(refreshState, 2000);
+            pollInterval = setInterval(refreshState, 1000);
         }
         
         function stopPolling() {

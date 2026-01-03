@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantix - Jeu de devinette sémantique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --accent: #00d4aa;
+            --accent-dim: #00a080;
+            --text: #e8e8e8;
+            --text-dim: #888;
+            --hot: #ff6b6b;
+            --warm: #ffa94d;
+            --cool: #74c0fc;
+            --cold: #868e96;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse at 20% 80%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: var(--text-dim);
+            margin-top: 8px;
+        }
+        
+        /* Écrans */
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* Menu principal */
+        .menu-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        
+        .menu-card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background: var(--bg-dark);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 15px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        input[type="text"]::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+            color: var(--bg-dark);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 212, 170, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 212, 170, 0.1);
+        }
+        
+        /* Lobby */
+        .code-display {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .code-display .code {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: var(--accent);
+        }
+        
+        .code-display .label {
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+        
+        .players-list {
+            margin: 20px 0;
+        }
+        
+        .player-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        
+        .player-item .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #667eea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+        
+        /* Jeu */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .hint-box {
+            text-align: center;
+        }
+        
+        .hint-box .label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        
+        .hint-box .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .turn-indicator {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--bg-dark);
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .turn-indicator.waiting {
+            background: var(--text-dim);
+            color: var(--bg-dark);
+        }
+        
+        /* Input de jeu */
+        .guess-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .guess-input-container input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .guess-input-container .btn {
+            width: auto;
+            padding: 14px 30px;
+        }
+        
+        /* Tableau des tentatives */
+        .board {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        .board h3 {
+            margin-bottom: 15px;
+            color: var(--text-dim);
+        }
+        
+        .guess-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            margin: 8px 0;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .guess-row .indicator {
+            font-size: 1.3rem;
+            margin-right: 12px;
+        }
+        
+        .guess-row .rank {
+            font-weight: 700;
+            min-width: 60px;
+        }
+        
+        .guess-row .word {
+            flex: 1;
+            font-weight: 600;
+        }
+        
+        .guess-row .player {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-right: 15px;
+        }
+        
+        .guess-row .points {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .guess-row.hot { border-left: 4px solid var(--hot); }
+        .guess-row.warm { border-left: 4px solid var(--warm); }
+        .guess-row.cool { border-left: 4px solid var(--cool); }
+        .guess-row.cold { border-left: 4px solid var(--cold); }
+        
+        /* Scores */
+        .scores-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .score-item {
+            background: var(--bg-card);
+            padding: 12px 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .score-item .name {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        
+        .score-item .points {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .score-item.current {
+            border: 2px solid var(--accent);
+        }
+        
+        /* Modal victoire */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .modal-content h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .modal-content .secret {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 20px 0;
+        }
+        
+        .modal-content .winner {
+            color: var(--text-dim);
+            margin-bottom: 30px;
+        }
+        
+        /* Message d'erreur */
+        .error-msg {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--hot);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .error-msg.show {
+            display: block;
+        }
+        
+        /* Empty state */
+        .empty-board {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .code-display .code { font-size: 2.2rem; }
+            .guess-input-container { flex-direction: column; }
+            .guess-input-container .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Semantix</h1>
+            <p class="subtitle">Trouvez le mot secret grâce à la proximité sémantique</p>
+        </header>
+        
+        <!-- Écran Menu -->
+        <div id="menu-screen" class="screen active">
+            <div class="menu-card">
+                <h2>🎮 Créer une partie</h2>
+                <input type="text" id="create-name" placeholder="Votre pseudo" maxlength="15">
+                <button class="btn btn-primary" onclick="createGame()">Créer une partie</button>
+            </div>
+            
+            <div class="menu-card">
+                <h2>🚪 Rejoindre une partie</h2>
+                <input type="text" id="join-code" placeholder="Code de la partie (ex: ABCD)" maxlength="4" style="text-transform: uppercase;">
+                <input type="text" id="join-name" placeholder="Votre pseudo" maxlength="15">
+                <button class="btn btn-secondary" onclick="joinGame()">Rejoindre</button>
+            </div>
+            
+            <div id="menu-error" class="error-msg"></div>
+        </div>
+        
+        <!-- Écran Lobby -->
+        <div id="lobby-screen" class="screen">
+            <div class="menu-card">
+                <h2>📋 Code de la partie</h2>
+                <div class="code-display">
+                    <div class="label">Partagez ce code avec vos amis</div>
+                    <div class="code" id="lobby-code">----</div>
+                </div>
+                
+                <h3 style="margin: 20px 0 10px; color: var(--text-dim);">Joueurs connectés</h3>
+                <div class="players-list" id="lobby-players"></div>
+                
+                <button class="btn btn-primary" onclick="startGame()" style="margin-top: 20px;">
+                    Commencer la partie
+                </button>
+            </div>
+        </div>
+        
+        <!-- Écran Jeu -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="hint-box">
+                    <div class="label">Lettres</div>
+                    <div class="value" id="hint-letters">?</div>
+                </div>
+                <div class="hint-box">
+                    <div class="label">Tentatives</div>
+                    <div class="value" id="guess-count">0</div>
+                </div>
+                <div id="turn-indicator" class="turn-indicator">Votre tour</div>
+            </div>
+            
+            <div class="scores-bar" id="scores-bar"></div>
+            
+            <div class="guess-input-container">
+                <input type="text" id="guess-input" placeholder="Entrez un mot..." autocomplete="off">
+                <button class="btn btn-primary" onclick="submitGuess()">Envoyer</button>
+            </div>
+            
+            <div id="guess-error" class="error-msg"></div>
+            
+            <div class="board">
+                <h3>📊 Tableau des tentatives</h3>
+                <div id="guesses-list">
+                    <div class="empty-board">Aucune tentative pour l'instant.<br>Soyez le premier à proposer un mot !</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Victoire -->
+        <div id="win-modal" class="modal">
+            <div class="modal-content">
+                <h2>🎉 Trouvé !</h2>
+                <div class="secret" id="modal-secret">---</div>
+                <div class="winner" id="modal-winner">Bravo !</div>
+                <button class="btn btn-primary" onclick="newRound()">Nouvelle manche</button>
+                <button class="btn btn-secondary" onclick="backToMenu()" style="margin-top: 10px;">Retour au menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // État local
+        let gameCode = null;
+        let playerId = null;
+        let playerName = null;
+        let pollInterval = null;
+        
+        // Utilitaires
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+        
+        // Créer une partie
+        async function createGame() {
+            const name = document.getElementById('create-name').value.trim() || 'Joueur';
+            playerName = name;
+            
+            try {
+                const res = await fetch('/api/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    gameCode = data.code;
+                    playerId = data.player_id;
+                    document.getElementById('lobby-code').textContent = gameCode;
+                    updateLobbyPlayers({ 1: name });
+                    showScreen('lobby-screen');
+                } else {
+                    showError('menu-error', data.error);
+                }
+            } catch (e) {
+                showError('menu-error', 'Erreur de connexion');
+            }
+        }
+        
+        // Rejoindre une partie
+        async function joinGame() {
+            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            const name = document.getElementById('join-name').value.trim() || 'Joueur';
+            playerName = name;
+            
+            if (code.length !== 4) {
+                showError('menu-error', 'Le code doit faire 4 lettres');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, name })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    gameCode = data.code;
+                    playerId = data.player_id;
+                    document.getElementById('lobby-code').textContent = gameCode;
+                    updateLobbyPlayers(data.players);
+                    showScreen('lobby-screen');
+                } else {
+                    showError('menu-error', data.error);
+                }
+            } catch (e) {
+                showError('menu-error', 'Erreur de connexion');
+            }
+        }
+        
+        // Mettre à jour la liste des joueurs dans le lobby
+        function updateLobbyPlayers(players) {
+            const container = document.getElementById('lobby-players');
+            container.innerHTML = '';
+            
+            for (const [id, name] of Object.entries(players)) {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `
+                    <div class="avatar">J${id}</div>
+                    <div>${name} ${parseInt(id) === playerId ? '(vous)' : ''}</div>
+                `;
+                container.appendChild(div);
+            }
+        }
+        
+        // Démarrer la partie
+        function startGame() {
+            showScreen('game-screen');
+            startPolling();
+            document.getElementById('guess-input').focus();
+        }
+        
+        // Soumettre une tentative
+        async function submitGuess() {
+            const input = document.getElementById('guess-input');
+            const word = input.value.trim();
+            
+            if (!word) return;
+            
+            try {
+                const res = await fetch('/api/guess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: gameCode, player_id: playerId, word })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    input.value = '';
+                    refreshState();
+                    
+                    if (data.found) {
+                        showWinModal(data.secret_word);
+                    }
+                } else {
+                    showError('guess-error', data.error);
+                }
+            } catch (e) {
+                showError('guess-error', 'Erreur de connexion');
+            }
+        }
+        
+        // Rafraîchir l'état du jeu
+        async function refreshState() {
+            if (!gameCode) return;
+            
+            try {
+                const res = await fetch(`/api/state/${gameCode}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    updateGameUI(data);
+                    
+                    if (data.found && !document.getElementById('win-modal').classList.contains('active')) {
+                        showWinModal(data.secret_word, data.players[data.winner]);
+                    }
+                }
+            } catch (e) {
+                console.error('Erreur de rafraîchissement', e);
+            }
+        }
+        
+        // Mettre à jour l'interface du jeu
+        function updateGameUI(data) {
+            // Indice (nombre de lettres)
+            document.getElementById('hint-letters').textContent = data.hint;
+            
+            // Nombre de tentatives
+            document.getElementById('guess-count').textContent = data.guesses.length;
+            
+            // Indicateur de tour
+            const turnEl = document.getElementById('turn-indicator');
+            if (data.current_player === playerId) {
+                turnEl.textContent = 'Votre tour';
+                turnEl.classList.remove('waiting');
+                document.getElementById('guess-input').disabled = false;
+            } else {
+                turnEl.textContent = `Tour de ${data.players[data.current_player]}`;
+                turnEl.classList.add('waiting');
+                document.getElementById('guess-input').disabled = true;
+            }
+            
+            // Scores
+            const scoresBar = document.getElementById('scores-bar');
+            scoresBar.innerHTML = '';
+            for (const [id, name] of Object.entries(data.players)) {
+                const score = data.scores[id] || 0;
+                const isCurrent = parseInt(id) === playerId;
+                scoresBar.innerHTML += `
+                    <div class="score-item ${isCurrent ? 'current' : ''}">
+                        <div class="name">${name}</div>
+                        <div class="points">${score}</div>
+                    </div>
+                `;
+            }
+            
+            // Tentatives
+            const guessesList = document.getElementById('guesses-list');
+            if (data.guesses.length === 0) {
+                guessesList.innerHTML = '<div class="empty-board">Aucune tentative pour l\'instant.<br>Soyez le premier à proposer un mot !</div>';
+            } else {
+                guessesList.innerHTML = '';
+                for (const g of data.guesses) {
+                    let tempClass = 'cold';
+                    if (g.rank <= 10) tempClass = 'hot';
+                    else if (g.rank <= 50) tempClass = 'warm';
+                    else if (g.rank <= 500) tempClass = 'cool';
+                    
+                    guessesList.innerHTML += `
+                        <div class="guess-row ${tempClass}">
+                            <span class="indicator">${g.indicator}</span>
+                            <span class="rank">#${g.rank}</span>
+                            <span class="word">${g.word}</span>
+                            <span class="player">${g.player_name}</span>
+                            <span class="points">+${g.points}</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Afficher la modal de victoire
+        function showWinModal(secretWord, winnerName) {
+            document.getElementById('modal-secret').textContent = secretWord;
+            document.getElementById('modal-winner').textContent = winnerName ? 
+                `${winnerName} a trouvé le mot !` : 'Bravo !';
+            document.getElementById('win-modal').classList.add('active');
+            stopPolling();
+        }
+        
+        // Nouvelle manche
+        async function newRound() {
+            try {
+                const res = await fetch('/api/new_round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: gameCode })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('win-modal').classList.remove('active');
+                    startPolling();
+                    refreshState();
+                }
+            } catch (e) {
+                console.error('Erreur nouvelle manche', e);
+            }
+        }
+        
+        // Retour au menu
+        function backToMenu() {
+            document.getElementById('win-modal').classList.remove('active');
+            stopPolling();
+            gameCode = null;
+            playerId = null;
+            showScreen('menu-screen');
+        }
+        
+        // Polling pour synchroniser les joueurs
+        function startPolling() {
+            stopPolling();
+            refreshState();
+            pollInterval = setInterval(refreshState, 2000);
+        }
+        
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+        
+        // Événements clavier
+        document.getElementById('guess-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitGuess();
+        });
+        
+        document.getElementById('create-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createGame();
+        });
+        
+        document.getElementById('join-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('join-name').focus();
+        });
+        
+        document.getElementById('join-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+    </script>
+</body>
+</html>
+

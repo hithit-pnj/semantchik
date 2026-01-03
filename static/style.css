@@ -1,0 +1,468 @@
+/* Semantix - Style sobre */
+
+:root {
+    --bg: #fafafa;
+    --card: #fff;
+    --border: #ddd;
+    --border-dark: #999;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --success: #16a34a;
+    --hot: #dc2626;
+    --warm: #ea580c;
+    --cool: #0891b2;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Screens */
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* Cards */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.card h2 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+/* Inputs */
+input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 12px;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+input[type="text"]::placeholder {
+    color: #aaa;
+}
+
+input[type="text"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Buttons */
+.btn {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid var(--border-dark);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    background: var(--card);
+    color: var(--text);
+    transition: background 0.15s;
+}
+
+.btn:hover {
+    background: var(--bg);
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+/* Code display */
+.code-display {
+    text-align: center;
+    padding: 24px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    margin: 16px 0;
+}
+
+.code-display .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.code-display .code {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    margin-top: 8px;
+}
+
+/* Player list */
+.player-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 1rem;
+}
+
+.player-item:last-child {
+    border-bottom: none;
+}
+
+.player-item .num {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Game header */
+.game-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-box {
+    flex: 1;
+    text-align: center;
+    padding: 16px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+}
+
+.stat-box .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.stat-box .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.turn-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.turn-box.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 600;
+}
+
+/* Guess form */
+.guess-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.guess-form input {
+    flex: 1;
+    margin-bottom: 0;
+    font-size: 1.1rem;
+    padding: 14px;
+}
+
+.guess-form .btn {
+    width: auto;
+    padding: 14px 28px;
+    font-weight: 600;
+}
+
+/* Scores */
+.scores {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.score-box {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+}
+
+.score-box.me {
+    border-color: var(--accent);
+}
+
+.score-box .name {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.score-box .pts {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* Board */
+.board {
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+
+.board-header {
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.board-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.guess-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 1rem;
+}
+
+.guess-row:last-child {
+    border-bottom: none;
+}
+
+.guess-row .icon {
+    font-size: 1.1rem;
+    margin-right: 12px;
+    width: 24px;
+    text-align: center;
+}
+
+.guess-row .rank {
+    min-width: 60px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.guess-row .word {
+    flex: 1;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.guess-row .player {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-right: 16px;
+}
+
+.guess-row .points {
+    font-weight: 600;
+    color: var(--success);
+}
+
+.guess-row.hot {
+    background: #fef2f2;
+}
+
+.guess-row.hot .rank {
+    color: var(--hot);
+}
+
+.guess-row.warm {
+    background: #fff7ed;
+}
+
+.guess-row.warm .rank {
+    color: var(--warm);
+}
+
+.guess-row.cool {
+    background: #ecfeff;
+}
+
+.guess-row.cool .rank {
+    color: var(--cool);
+}
+
+.empty-msg {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    text-align: center;
+    max-width: 380px;
+    margin: 20px;
+    width: 100%;
+}
+
+.modal-box h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.modal-box .secret {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+
+.modal-box .winner {
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+}
+
+.modal-box .btn {
+    margin-top: 8px;
+}
+
+/* Error */
+.error-msg {
+    background: #fef2f2;
+    color: var(--hot);
+    padding: 12px 16px;
+    border: 1px solid #fecaca;
+    margin: 12px 0;
+    display: none;
+    font-size: 0.9rem;
+}
+
+.error-msg.show {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .guess-form {
+        flex-direction: column;
+    }
+    
+    .guess-form .btn {
+        width: 100%;
+    }
+    
+    .game-stats {
+        flex-wrap: wrap;
+    }
+    
+    .stat-box {
+        min-width: calc(50% - 6px);
+    }
+    
+    .turn-box {
+        width: 100%;
+    }
+}
+

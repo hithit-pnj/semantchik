@@ -53,10 +53,6 @@
         <div id="game-screen" class="screen">
             <div class="game-stats">
                 <div class="stat-box">
-                    <div class="label">Lettres</div>
-                    <div class="value" id="hint-letters">?</div>
-                </div>
-                <div class="stat-box">
                     <div class="label">Essais</div>
                     <div class="value" id="guess-count">0</div>
                 </div>
@@ -231,7 +227,6 @@
         }
         
         function updateGameUI(data) {
-            document.getElementById('hint-letters').textContent = data.hint;
             document.getElementById('guess-count').textContent = data.guesses.length;
             
             const turnEl = document.getElementById('turn-indicator');

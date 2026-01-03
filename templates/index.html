@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semantix - Jeu de devinette sémantique</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0f0f1a;
-            --bg-card: #1a1a2e;
-            --accent: #00d4aa;
-            --accent-dim: #00a080;
-            --text: #e8e8e8;
-            --text-dim: #888;
-            --hot: #ff6b6b;
-            --warm: #ffa94d;
-            --cool: #74c0fc;
-            --cold: #868e96;
+            --bg: #fffef5;
+            --card: #fff;
+            --border: #333;
+            --text: #222;
+            --text-light: #666;
+            --accent: #4a7c59;
+            --hot: #c9463d;
+            --warm: #e8a64c;
+            --cool: #5b8fa8;
+            --cold: #888;
         }
         
         * {
@@ -26,38 +26,37 @@
         }
         
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: var(--bg-dark);
+            font-family: 'Patrick Hand', cursive;
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            background-image: 
-                radial-gradient(ellipse at 20% 80%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+            font-size: 18px;
+            line-height: 1.4;
         }
         
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 20px;
         }
         
         header {
             text-align: center;
-            padding: 30px 0;
+            padding: 20px 0;
+            border-bottom: 2px dashed var(--border);
+            margin-bottom: 20px;
         }
         
         h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), #667eea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 2.2rem;
+            font-weight: normal;
+            color: var(--accent);
         }
         
         .subtitle {
-            color: var(--text-dim);
-            margin-top: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-top: 5px;
         }
         
         /* Écrans */
@@ -69,31 +68,34 @@
             display: block;
         }
         
-        /* Menu principal */
-        .menu-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 30px;
-            margin: 20px 0;
+        /* Cartes */
+        .card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
         }
         
-        .menu-card h2 {
+        .card h2 {
             font-size: 1.3rem;
-            margin-bottom: 20px;
-            color: var(--accent);
+            font-weight: normal;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
         }
         
+        /* Inputs */
         input[type="text"] {
             width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #333;
-            border-radius: 10px;
-            background: var(--bg-dark);
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            background: var(--bg);
             color: var(--text);
             font-size: 1rem;
             font-family: inherit;
-            margin-bottom: 15px;
-            transition: border-color 0.2s;
+            margin-bottom: 12px;
         }
         
         input[type="text"]:focus {
@@ -102,240 +104,240 @@
         }
         
         input[type="text"]::placeholder {
-            color: var(--text-dim);
+            color: var(--text-light);
         }
         
+        /* Boutons */
         .btn {
             width: 100%;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 10px;
+            padding: 12px 20px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
             font-size: 1rem;
-            font-weight: 600;
             font-family: inherit;
             cursor: pointer;
-            transition: all 0.2s;
+            background: var(--card);
+        }
+        
+        .btn:hover {
+            background: #f5f5f0;
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-            color: var(--bg-dark);
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
         }
         
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 212, 170, 0.3);
+            background: #3d6a4a;
         }
         
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid var(--accent);
-            color: var(--accent);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(0, 212, 170, 0.1);
-        }
-        
-        /* Lobby */
-        .code-display {
+        /* Code de partie */
+        .code-box {
             text-align: center;
-            padding: 30px;
-            background: var(--bg-dark);
-            border-radius: 12px;
-            margin: 20px 0;
+            padding: 20px;
+            background: var(--bg);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            margin: 15px 0;
         }
         
-        .code-display .code {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: 8px;
+        .code-box .label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .code-box .code {
+            font-size: 2.5rem;
+            letter-spacing: 6px;
             color: var(--accent);
+            margin-top: 5px;
         }
         
-        .code-display .label {
-            color: var(--text-dim);
-            margin-bottom: 10px;
-        }
-        
-        .players-list {
-            margin: 20px 0;
-        }
-        
+        /* Liste joueurs */
         .player-item {
             display: flex;
             align-items: center;
-            padding: 12px;
-            background: var(--bg-dark);
-            border-radius: 8px;
-            margin: 8px 0;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
         
-        .player-item .avatar {
-            width: 40px;
-            height: 40px;
+        .player-item:last-child {
+            border-bottom: none;
+        }
+        
+        .player-item .num {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border);
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), #667eea);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            margin-right: 12px;
+            margin-right: 10px;
+            font-size: 0.9rem;
         }
         
-        /* Jeu */
-        .game-header {
+        /* Header de jeu */
+        .game-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 12px 15px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
         
-        .hint-box {
+        .info-item {
             text-align: center;
         }
         
-        .hint-box .label {
+        .info-item .label {
             font-size: 0.8rem;
-            color: var(--text-dim);
+            color: var(--text-light);
         }
         
-        .hint-box .value {
+        .info-item .value {
             font-size: 1.2rem;
-            font-weight: 700;
             color: var(--accent);
         }
         
-        .turn-indicator {
-            padding: 10px 20px;
-            background: var(--accent);
-            color: var(--bg-dark);
-            border-radius: 20px;
-            font-weight: 600;
+        .turn-badge {
+            padding: 6px 12px;
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            font-size: 0.9rem;
         }
         
-        .turn-indicator.waiting {
-            background: var(--text-dim);
-            color: var(--bg-dark);
+        .turn-badge.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
         }
         
         /* Input de jeu */
-        .guess-input-container {
+        .guess-form {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
-        .guess-input-container input {
+        .guess-form input {
             flex: 1;
             margin-bottom: 0;
         }
         
-        .guess-input-container .btn {
+        .guess-form .btn {
             width: auto;
-            padding: 14px 30px;
+            padding: 12px 25px;
         }
         
-        /* Tableau des tentatives */
-        .board {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 20px;
-        }
-        
-        .board h3 {
+        /* Scores */
+        .scores {
+            display: flex;
+            gap: 10px;
             margin-bottom: 15px;
-            color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+        
+        .score-box {
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            background: var(--card);
+        }
+        
+        .score-box.me {
+            border-color: var(--accent);
+            background: #f0f7f2;
+        }
+        
+        .score-box .name {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .score-box .pts {
+            font-size: 1.4rem;
+            color: var(--accent);
+        }
+        
+        /* Tableau des mots */
+        .board {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .board-header {
+            padding: 10px 15px;
+            background: var(--bg);
+            border-bottom: 2px solid var(--border);
+            font-size: 0.95rem;
+        }
+        
+        .board-content {
+            max-height: 350px;
+            overflow-y: auto;
         }
         
         .guess-row {
             display: flex;
             align-items: center;
-            padding: 12px 15px;
-            background: var(--bg-dark);
-            border-radius: 10px;
-            margin: 8px 0;
-            animation: slideIn 0.3s ease;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
         }
         
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .guess-row:last-child {
+            border-bottom: none;
         }
         
-        .guess-row .indicator {
-            font-size: 1.3rem;
-            margin-right: 12px;
+        .guess-row .icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+            width: 25px;
         }
         
         .guess-row .rank {
-            font-weight: 700;
-            min-width: 60px;
+            min-width: 50px;
+            font-size: 0.9rem;
         }
         
         .guess-row .word {
             flex: 1;
-            font-weight: 600;
         }
         
         .guess-row .player {
-            color: var(--text-dim);
-            font-size: 0.9rem;
-            margin-right: 15px;
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-right: 10px;
         }
         
         .guess-row .points {
-            font-weight: 600;
             color: var(--accent);
         }
         
-        .guess-row.hot { border-left: 4px solid var(--hot); }
-        .guess-row.warm { border-left: 4px solid var(--warm); }
-        .guess-row.cool { border-left: 4px solid var(--cool); }
-        .guess-row.cold { border-left: 4px solid var(--cold); }
+        .guess-row.hot { background: #fdf0ef; }
+        .guess-row.warm { background: #fdf8ef; }
+        .guess-row.cool { background: #eff6f9; }
         
-        /* Scores */
-        .scores-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .score-item {
-            background: var(--bg-card);
-            padding: 12px 20px;
-            border-radius: 10px;
-            flex: 1;
-            min-width: 120px;
+        .empty-msg {
             text-align: center;
+            padding: 30px;
+            color: var(--text-light);
         }
         
-        .score-item .name {
-            font-size: 0.85rem;
-            color: var(--text-dim);
-        }
-        
-        .score-item .points {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-        
-        .score-item.current {
-            border: 2px solid var(--accent);
-        }
-        
-        /* Modal victoire */
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -343,7 +345,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
             align-items: center;
             justify-content: center;
             z-index: 100;
@@ -353,37 +355,48 @@
             display: flex;
         }
         
-        .modal-content {
-            background: var(--bg-card);
-            padding: 40px;
-            border-radius: 20px;
+        .modal-box {
+            background: var(--card);
+            border: 3px solid var(--border);
+            border-radius: 10px;
+            padding: 30px;
             text-align: center;
-            max-width: 400px;
+            max-width: 350px;
+            margin: 20px;
         }
         
-        .modal-content h2 {
-            font-size: 2rem;
+        .modal-box h2 {
+            font-size: 1.5rem;
+            font-weight: normal;
             margin-bottom: 10px;
         }
         
-        .modal-content .secret {
-            font-size: 2.5rem;
-            font-weight: 700;
+        .modal-box .secret {
+            font-size: 2rem;
             color: var(--accent);
-            margin: 20px 0;
+            margin: 15px 0;
+            padding: 10px;
+            background: var(--bg);
+            border: 2px dashed var(--accent);
+            border-radius: 5px;
         }
         
-        .modal-content .winner {
-            color: var(--text-dim);
-            margin-bottom: 30px;
+        .modal-box .winner {
+            color: var(--text-light);
+            margin-bottom: 20px;
         }
         
-        /* Message d'erreur */
+        .modal-box .btn {
+            margin-top: 10px;
+        }
+        
+        /* Erreur */
         .error-msg {
-            background: rgba(255, 107, 107, 0.2);
+            background: #fdf0ef;
             color: var(--hot);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid var(--hot);
+            border-radius: 5px;
             margin: 10px 0;
             display: none;
         }
@@ -392,116 +405,109 @@
             display: block;
         }
         
-        /* Empty state */
-        .empty-board {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-dim);
-        }
-        
         /* Responsive */
-        @media (max-width: 600px) {
-            h1 { font-size: 1.8rem; }
-            .code-display .code { font-size: 2.2rem; }
-            .guess-input-container { flex-direction: column; }
-            .guess-input-container .btn { width: 100%; }
+        @media (max-width: 500px) {
+            .guess-form {
+                flex-direction: column;
+            }
+            .guess-form .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎯 Semantix</h1>
+            <h1>Semantix</h1>
             <p class="subtitle">Trouvez le mot secret grâce à la proximité sémantique</p>
         </header>
         
-        <!-- Écran Menu -->
+        <!-- Menu -->
         <div id="menu-screen" class="screen active">
-            <div class="menu-card">
-                <h2>🎮 Créer une partie</h2>
+            <div class="card">
+                <h2>Créer une partie</h2>
                 <input type="text" id="create-name" placeholder="Votre pseudo" maxlength="15">
-                <button class="btn btn-primary" onclick="createGame()">Créer une partie</button>
+                <button class="btn btn-primary" onclick="createGame()">Créer</button>
             </div>
             
-            <div class="menu-card">
-                <h2>🚪 Rejoindre une partie</h2>
-                <input type="text" id="join-code" placeholder="Code de la partie (ex: ABCD)" maxlength="4" style="text-transform: uppercase;">
+            <div class="card">
+                <h2>Rejoindre une partie</h2>
+                <input type="text" id="join-code" placeholder="Code (ex: ABCD)" maxlength="4" style="text-transform: uppercase;">
                 <input type="text" id="join-name" placeholder="Votre pseudo" maxlength="15">
-                <button class="btn btn-secondary" onclick="joinGame()">Rejoindre</button>
+                <button class="btn" onclick="joinGame()">Rejoindre</button>
             </div>
             
             <div id="menu-error" class="error-msg"></div>
         </div>
         
-        <!-- Écran Lobby -->
+        <!-- Lobby -->
         <div id="lobby-screen" class="screen">
-            <div class="menu-card">
-                <h2>📋 Code de la partie</h2>
-                <div class="code-display">
-                    <div class="label">Partagez ce code avec vos amis</div>
+            <div class="card">
+                <h2>Code de la partie</h2>
+                <div class="code-box">
+                    <div class="label">Partagez ce code</div>
                     <div class="code" id="lobby-code">----</div>
                 </div>
                 
-                <h3 style="margin: 20px 0 10px; color: var(--text-dim);">Joueurs connectés</h3>
-                <div class="players-list" id="lobby-players"></div>
+                <h3 style="margin: 15px 0 10px; font-weight: normal; color: var(--text-light);">Joueurs</h3>
+                <div id="lobby-players"></div>
                 
-                <button class="btn btn-primary" onclick="startGame()" style="margin-top: 20px;">
-                    Commencer la partie
+                <button class="btn btn-primary" onclick="startGame()" style="margin-top: 15px;">
+                    Commencer
                 </button>
             </div>
         </div>
         
-        <!-- Écran Jeu -->
+        <!-- Jeu -->
         <div id="game-screen" class="screen">
-            <div class="game-header">
-                <div class="hint-box">
+            <div class="game-info">
+                <div class="info-item">
                     <div class="label">Lettres</div>
                     <div class="value" id="hint-letters">?</div>
                 </div>
-                <div class="hint-box">
-                    <div class="label">Tentatives</div>
+                <div class="info-item">
+                    <div class="label">Essais</div>
                     <div class="value" id="guess-count">0</div>
                 </div>
-                <div id="turn-indicator" class="turn-indicator">Votre tour</div>
+                <div id="turn-indicator" class="turn-badge active">Votre tour</div>
             </div>
             
-            <div class="scores-bar" id="scores-bar"></div>
+            <div class="scores" id="scores-bar"></div>
             
-            <div class="guess-input-container">
+            <div class="guess-form">
                 <input type="text" id="guess-input" placeholder="Entrez un mot..." autocomplete="off">
-                <button class="btn btn-primary" onclick="submitGuess()">Envoyer</button>
+                <button class="btn btn-primary" onclick="submitGuess()">OK</button>
             </div>
             
             <div id="guess-error" class="error-msg"></div>
             
             <div class="board">
-                <h3>📊 Tableau des tentatives</h3>
-                <div id="guesses-list">
-                    <div class="empty-board">Aucune tentative pour l'instant.<br>Soyez le premier à proposer un mot !</div>
+                <div class="board-header">Tentatives (triées par proximité)</div>
+                <div class="board-content" id="guesses-list">
+                    <div class="empty-msg">Aucune tentative.<br>Proposez un mot !</div>
                 </div>
             </div>
         </div>
         
         <!-- Modal Victoire -->
         <div id="win-modal" class="modal">
-            <div class="modal-content">
-                <h2>🎉 Trouvé !</h2>
+            <div class="modal-box">
+                <h2>Trouvé !</h2>
                 <div class="secret" id="modal-secret">---</div>
                 <div class="winner" id="modal-winner">Bravo !</div>
                 <button class="btn btn-primary" onclick="newRound()">Nouvelle manche</button>
-                <button class="btn btn-secondary" onclick="backToMenu()" style="margin-top: 10px;">Retour au menu</button>
+                <button class="btn" onclick="backToMenu()">Retour au menu</button>
             </div>
         </div>
     </div>
     
     <script>
-        // État local
         let gameCode = null;
         let playerId = null;
         let playerName = null;
         let pollInterval = null;
         
-        // Utilitaires
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -514,7 +520,6 @@
             setTimeout(() => el.classList.remove('show'), 3000);
         }
         
-        // Créer une partie
         async function createGame() {
             const name = document.getElementById('create-name').value.trim() || 'Joueur';
             playerName = name;
@@ -541,7 +546,6 @@
             }
         }
         
-        // Rejoindre une partie
         async function joinGame() {
             const code = document.getElementById('join-code').value.trim().toUpperCase();
             const name = document.getElementById('join-name').value.trim() || 'Joueur';
@@ -574,7 +578,6 @@
             }
         }
         
-        // Mettre à jour la liste des joueurs dans le lobby
         function updateLobbyPlayers(players) {
             const container = document.getElementById('lobby-players');
             container.innerHTML = '';
@@ -583,21 +586,19 @@
                 const div = document.createElement('div');
                 div.className = 'player-item';
                 div.innerHTML = `
-                    <div class="avatar">J${id}</div>
+                    <div class="num">${id}</div>
                     <div>${name} ${parseInt(id) === playerId ? '(vous)' : ''}</div>
                 `;
                 container.appendChild(div);
             }
         }
         
-        // Démarrer la partie
         function startGame() {
             showScreen('game-screen');
             startPolling();
             document.getElementById('guess-input').focus();
         }
         
-        // Soumettre une tentative
         async function submitGuess() {
             const input = document.getElementById('guess-input');
             const word = input.value.trim();
@@ -627,7 +628,6 @@
             }
         }
         
-        // Rafraîchir l'état du jeu
         async function refreshState() {
             if (!gameCode) return;
             
@@ -647,23 +647,18 @@
             }
         }
         
-        // Mettre à jour l'interface du jeu
         function updateGameUI(data) {
-            // Indice (nombre de lettres)
             document.getElementById('hint-letters').textContent = data.hint;
-            
-            // Nombre de tentatives
             document.getElementById('guess-count').textContent = data.guesses.length;
             
-            // Indicateur de tour
             const turnEl = document.getElementById('turn-indicator');
             if (data.current_player === playerId) {
                 turnEl.textContent = 'Votre tour';
-                turnEl.classList.remove('waiting');
+                turnEl.classList.add('active');
                 document.getElementById('guess-input').disabled = false;
             } else {
                 turnEl.textContent = `Tour de ${data.players[data.current_player]}`;
-                turnEl.classList.add('waiting');
+                turnEl.classList.remove('active');
                 document.getElementById('guess-input').disabled = true;
             }
             
@@ -674,9 +669,9 @@
                 const score = data.scores[id] || 0;
                 const isCurrent = parseInt(id) === playerId;
                 scoresBar.innerHTML += `
-                    <div class="score-item ${isCurrent ? 'current' : ''}">
+                    <div class="score-box ${isCurrent ? 'me' : ''}">
                         <div class="name">${name}</div>
-                        <div class="points">${score}</div>
+                        <div class="pts">${score}</div>
                     </div>
                 `;
             }
@@ -684,18 +679,18 @@
             // Tentatives
             const guessesList = document.getElementById('guesses-list');
             if (data.guesses.length === 0) {
-                guessesList.innerHTML = '<div class="empty-board">Aucune tentative pour l\'instant.<br>Soyez le premier à proposer un mot !</div>';
+                guessesList.innerHTML = '<div class="empty-msg">Aucune tentative.<br>Proposez un mot !</div>';
             } else {
                 guessesList.innerHTML = '';
                 for (const g of data.guesses) {
-                    let tempClass = 'cold';
+                    let tempClass = '';
                     if (g.rank <= 10) tempClass = 'hot';
                     else if (g.rank <= 50) tempClass = 'warm';
                     else if (g.rank <= 500) tempClass = 'cool';
                     
                     guessesList.innerHTML += `
                         <div class="guess-row ${tempClass}">
-                            <span class="indicator">${g.indicator}</span>
+                            <span class="icon">${g.indicator}</span>
                             <span class="rank">#${g.rank}</span>
                             <span class="word">${g.word}</span>
                             <span class="player">${g.player_name}</span>
@@ -706,7 +701,6 @@
             }
         }
         
-        // Afficher la modal de victoire
         function showWinModal(secretWord, winnerName) {
             document.getElementById('modal-secret').textContent = secretWord;
             document.getElementById('modal-winner').textContent = winnerName ? 
@@ -715,7 +709,6 @@
             stopPolling();
         }
         
-        // Nouvelle manche
         async function newRound() {
             try {
                 const res = await fetch('/api/new_round', {
@@ -735,7 +728,6 @@
             }
         }
         
-        // Retour au menu
         function backToMenu() {
             document.getElementById('win-modal').classList.remove('active');
             stopPolling();
@@ -744,7 +736,6 @@
             showScreen('menu-screen');
         }
         
-        // Polling pour synchroniser les joueurs
         function startPolling() {
             stopPolling();
             refreshState();
@@ -758,7 +749,6 @@
             }
         }
         
-        // Événements clavier
         document.getElementById('guess-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') submitGuess();
         });
@@ -777,4 +767,3 @@
     </script>
 </body>
 </html>
-

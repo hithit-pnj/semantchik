@@ -192,6 +192,40 @@
         .score-box .turn-timer.warning .timer-value { color: var(--warning); }
         .score-box .turn-timer.danger .timer-value { color: var(--danger); }
         
+        /* Timer réduit (pénalité) */
+        .score-box .turn-timer.reduced .timer-label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--danger);
+            margin-top: 2px;
+        }
+        
+        .score-box .turn-timer.reduced .timer-value {
+            color: var(--danger);
+        }
+        
+        /* Notification de restart */
+        .restart-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 200;
+            animation: fadeInOut 4s ease-out forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
         /* === GUESS FORM === */
         .guess-form {
             display: flex;
@@ -226,6 +260,14 @@
             color: var(--dim);
             margin-bottom: 12px;
             font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .board-header strong {
+            color: var(--accent);
         }
         
         .guess-row {
@@ -282,6 +324,11 @@
         .guess-row .points { font-weight: 600; color: var(--accent); font-size: 0.9rem; }
         .guess-row .points.negative { color: var(--danger); }
         
+        .best-badge {
+            font-size: 0.8rem;
+            margin-left: 4px;
+        }
+        
         .empty-msg {
             text-align: center;
             color: var(--dim);
@@ -317,6 +364,47 @@
         .modal-box .btn { margin-top: 10px; }
         
         .modal-box.timeout h2 { color: var(--danger); }
+        
+        .top-words {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 16px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        
+        .top-words-title {
+            font-size: 0.8rem;
+            color: var(--dim);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .top-words-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .top-word-item {
+            background: var(--card);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            border: 1px solid var(--border);
+        }
+        
+        .top-word-item .tw-rank {
+            color: var(--dim);
+            margin-right: 4px;
+        }
+        
+        .top-word-item .tw-word {
+            color: var(--text);
+        }
         
         /* === PLAYER LIST === */
         .player-item {
@@ -405,7 +493,10 @@
             <div id="guess-error" class="error-msg"></div>
             
             <div class="board">
-                <div class="board-header">Tentatives triées par proximité · Rang > 1000 ou timeout = -1 pt</div>
+                <div class="board-header">
+                    <span>Tentatives triées par proximité</span>
+                    <span id="best-rank-display"></span>
+                </div>
                 <div class="board-content" id="guesses-list">
                     <div class="empty-msg">Aucune tentative pour l'instant</div>
                 </div>
@@ -418,6 +509,7 @@
                 <h2>Trouvé !</h2>
                 <div class="secret" id="modal-secret">---</div>
                 <div class="winner" id="modal-winner">Bravo !</div>
+                <div class="top-words" id="win-top-words"></div>
                 <button class="btn btn-primary" onclick="newRound()">Nouvelle manche</button>
                 <button class="btn btn-secondary" onclick="backToMenu()">Menu</button>
             </div>
@@ -429,6 +521,7 @@
                 <h2>Temps écoulé</h2>
                 <div class="secret" id="timeout-secret">---</div>
                 <div class="winner">Personne n'a trouvé à temps</div>
+                <div class="top-words" id="timeout-top-words"></div>
                 <button class="btn btn-primary" onclick="newRound()">Mot suivant</button>
                 <button class="btn btn-secondary" onclick="backToMenu()">Menu</button>
             </div>
@@ -445,6 +538,15 @@
         let turnTimeLimit = 15;
         let currentPlayer = 1;
         let lastGuessCount = 0;
+        let lastPlayerCount = 0;
+        
+        function showNotification(message) {
+            const notif = document.createElement('div');
+            notif.className = 'restart-notification';
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 4000);
+        }
         
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -585,6 +687,10 @@
                 body: JSON.stringify({ code: gameCode })
             });
             
+            // Initialiser le compteur de joueurs
+            const lobbyPlayers = document.getElementById('lobby-players').children.length;
+            lastPlayerCount = lobbyPlayers;
+            
             showScreen('game-screen');
             startPolling();
             document.getElementById('guess-input').focus();
@@ -605,11 +711,12 @@
                 
                 if (data.success) {
                     input.value = '';
+                    // refreshState va gérer l'affichage du modal avec les top 20 mots
                     refreshState();
-                    if (data.found) showWinModal(data.secret_word);
                 } else {
                     if (data.timeout) {
-                        showTimeoutModal(data.secret_word);
+                        // refreshState va gérer l'affichage du modal avec les top 20 mots
+                        refreshState();
                     } else {
                         showError('guess-error', data.error);
                     }
@@ -628,12 +735,21 @@
                 
                 if (data.success) {
                     currentPlayer = data.current_player;
+                    
+                    // Détecter si un nouveau joueur a rejoint (partie redémarrée)
+                    const playerCount = Object.keys(data.players).length;
+                    if (lastPlayerCount > 0 && playerCount > lastPlayerCount) {
+                        showNotification('🔄 Nouveau joueur ! Partie redémarrée pour l\'équité');
+                        lastGuessCount = 0;
+                    }
+                    lastPlayerCount = playerCount;
+                    
                     updateGameUI(data);
                     
                     if (data.round_timeout && !document.getElementById('timeout-modal').classList.contains('active')) {
-                        showTimeoutModal(data.secret_word);
+                        showTimeoutModal(data.secret_word, data.top_20_words);
                     } else if (data.found && !document.getElementById('win-modal').classList.contains('active')) {
-                        showWinModal(data.secret_word, data.players[data.winner]);
+                        showWinModal(data.secret_word, data.players[data.winner], data.top_20_words);
                     }
                 }
             } catch (e) {
@@ -654,6 +770,15 @@
             const isMyTurn = data.current_player === playerId;
             document.getElementById('guess-input').disabled = !isMyTurn;
             
+            // Afficher la moyenne top 10
+            const bestRankDisplay = document.getElementById('best-rank-display');
+            if (data.avg_top_10) {
+                const avgRounded = Math.round(data.avg_top_10);
+                bestRankDisplay.innerHTML = `· Moyenne top 10: <strong>${avgRounded}</strong> · Faire pire = -1 pt`;
+            } else {
+                bestRankDisplay.innerHTML = '· Rang > 1000 = -1 pt · Timeout = -1 pt';
+            }
+            
             // Scores avec timer intégré sous le joueur actif
             const scoresBar = document.getElementById('scores-bar');
             scoresBar.innerHTML = '';
@@ -667,12 +792,19 @@
                 if (data.turn_remaining <= 5) timerClass = 'danger';
                 else if (data.turn_remaining <= 8) timerClass = 'warning';
                 
+                // Ajouter la classe "reduced" si le timer est réduit
+                const isReduced = data.is_reduced_timer && isActiveTurn;
+                if (isReduced) timerClass += ' reduced';
+                
+                const reducedLabel = isReduced ? '<div class="timer-label">⚡ Timer réduit !</div>' : '';
+                
                 scoresBar.innerHTML += `
                     <div class="score-box${isActiveTurn ? ' active-turn' : ''}">
                         <div class="name">${name}${isMe ? ' (vous)' : ''}</div>
                         <div class="pts ${negativeClass}">${score} pts</div>
                         <div class="turn-timer ${timerClass}">
                             <div class="timer-value">${data.turn_remaining}s</div>
+                            ${reducedLabel}
                         </div>
                     </div>
                 `;
@@ -716,6 +848,7 @@
                     
                     const pointsClass = g.points < 0 ? 'negative' : '';
                     const pointsPrefix = g.points >= 0 ? '+' : '';
+                    const bestBadge = g.is_new_best ? '<span class="best-badge">👑</span>' : '';
                     
                     // Trouver le numéro de tentative
                     const attemptNum = insertionOrder[g.word];
@@ -724,7 +857,7 @@
                         <div class="guess-row ${tempClass}${latestClass}">
                             <span class="attempt-num">#${attemptNum}</span>
                             <span class="icon">${g.indicator}</span>
-                            <span class="rank">${g.rank}</span>
+                            <span class="rank">${g.rank}${bestBadge}</span>
                             <span class="word">${g.word}</span>
                             <span class="player">${g.player_name}</span>
                             <span class="points ${pointsClass}">${pointsPrefix}${g.points}</span>
@@ -734,16 +867,30 @@
             }
         }
         
-        function showWinModal(secretWord, winnerName) {
+        function renderTopWords(top20) {
+            if (!top20 || top20.length === 0) return '';
+            
+            let html = '<div class="top-words-title">Les 20 mots les plus proches :</div>';
+            html += '<div class="top-words-list">';
+            for (const item of top20) {
+                html += `<span class="top-word-item"><span class="tw-rank">${item.rank}.</span><span class="tw-word">${item.word}</span></span>`;
+            }
+            html += '</div>';
+            return html;
+        }
+        
+        function showWinModal(secretWord, winnerName, top20) {
             document.getElementById('modal-secret').textContent = secretWord;
             document.getElementById('modal-winner').textContent = winnerName ? 
                 `${winnerName} a trouvé le mot !` : 'Bravo !';
+            document.getElementById('win-top-words').innerHTML = renderTopWords(top20);
             document.getElementById('win-modal').classList.add('active');
             stopPolling();
         }
         
-        function showTimeoutModal(secretWord) {
+        function showTimeoutModal(secretWord, top20) {
             document.getElementById('timeout-secret').textContent = secretWord;
+            document.getElementById('timeout-top-words').innerHTML = renderTopWords(top20);
             document.getElementById('timeout-modal').classList.add('active');
             stopPolling();
         }
@@ -777,6 +924,7 @@
             gameCode = null;
             playerId = null;
             lastGuessCount = 0;
+            lastPlayerCount = 0;
             showScreen('menu-screen');
         }
         

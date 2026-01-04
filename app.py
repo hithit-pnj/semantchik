@@ -1,5 +1,5 @@
 # app.py
-# Application web Semantix - Version TEST avec timers et points dynamiques
+# Application web Semantix - Version avec timers et points dynamiques
 
 import os
 import json
@@ -23,9 +23,13 @@ DATA_FILE = os.path.join(BASE_DIR, "data", "game_data.json")
 
 # === PARAMÈTRES DE JEU (MODIFIABLES) ===
 ROUND_TIME_LIMIT = 300      # 5 minutes max par mot
-TURN_TIME_LIMIT = 15        # 15 secondes par tour
-PENALTY_THRESHOLD = 1000    # Rang au-delà duquel on perd des points
+TURN_TIME_LIMIT = 15        # 15 secondes par tour (défaut)
+REDUCED_TURN_TIME = 10      # Timer réduit après 2 timeouts consécutifs
+TIMEOUT_THRESHOLD = 2       # Nombre de timeouts avant réduction
+PENALTY_THRESHOLD = 1000    # Seuil par défaut si aucun mot trouvé
 TIMEOUT_PENALTY = -1        # Pénalité si on ne répond pas à temps
+REGRESSION_PENALTY = -1     # Pénalité si le mot est pire que le meilleur actuel
+BEST_WORD_BONUS = 1         # Bonus si on trouve le meilleur mot de la manche
 
 # ======================
 # Chargement des données pré-calculées
@@ -57,8 +61,19 @@ def generate_code():
     """Génère un code de partie à 4 lettres."""
     return ''.join(random.choices(string.ascii_uppercase, k=4))
 
-def calculate_points(rank):
-    """Calcule les points selon le rang - avec pénalités !"""
+def calculate_points(rank, avg_top_10=None):
+    """Calcule les points selon le rang - avec pénalités dynamiques !
+    
+    Si le rang est pire (plus élevé) que la moyenne des 10 meilleurs → pénalité !
+    """
+    # Déterminer le seuil de pénalité
+    threshold = avg_top_10 if avg_top_10 else PENALTY_THRESHOLD
+    
+    # Si le rang est pire que la moyenne top 10 → pénalité
+    if rank > threshold:
+        return REGRESSION_PENALTY
+    
+    # Sinon, points normaux selon le rang
     if rank == 1:
         return 100
     elif rank <= 10:
@@ -69,11 +84,34 @@ def calculate_points(rank):
         return 5
     elif rank <= 500:
         return 2
-    elif rank <= 1000:
-        return 0
     else:
-        # PÉNALITÉ : -1 point si trop loin !
-        return -1
+        return 0
+
+def get_avg_top_10(game):
+    """Calcule la moyenne des 10 meilleurs rangs de la manche."""
+    if not game['guesses']:
+        return None
+    
+    # Récupérer tous les rangs et les trier
+    ranks = sorted([g['rank'] for g in game['guesses']])
+    
+    # Prendre les 10 meilleurs (ou moins s'il y en a moins)
+    top_ranks = ranks[:10]
+    
+    # Calculer la moyenne
+    return sum(top_ranks) / len(top_ranks)
+
+def get_top_20_words(secret_word):
+    """Retourne les 20 mots les plus proches du mot secret."""
+    if secret_word not in RANKS:
+        return []
+    
+    ranks_for_secret = RANKS[secret_word]
+    # Trier par rang et prendre les 20 premiers (excluant le mot lui-même qui est rang 1)
+    sorted_words = sorted(ranks_for_secret.items(), key=lambda x: x[1])
+    # Prendre rangs 2 à 21 (le rang 1 c'est le mot secret)
+    top_20 = [{'word': word, 'rank': rank} for word, rank in sorted_words[1:21]]
+    return top_20
 
 def get_indicator(rank):
     """Retourne l'indicateur visuel selon le rang."""
@@ -98,10 +136,19 @@ def get_remaining_round_time(game):
     remaining = max(0, ROUND_TIME_LIMIT - elapsed)
     return int(remaining)
 
+def get_current_turn_limit(game):
+    """Retourne la limite de temps actuelle pour le joueur courant."""
+    current = game['current_player']
+    consecutive = game.get('consecutive_timeouts', {}).get(current, 0)
+    if consecutive >= TIMEOUT_THRESHOLD:
+        return REDUCED_TURN_TIME
+    return TURN_TIME_LIMIT
+
 def get_remaining_turn_time(game):
     """Retourne le temps restant pour ce tour (en secondes)."""
     elapsed = time.time() - game['turn_start_time']
-    remaining = max(0, TURN_TIME_LIMIT - elapsed)
+    turn_limit = get_current_turn_limit(game)
+    remaining = max(0, turn_limit - elapsed)
     return int(remaining)
 
 def check_and_advance_turn(game):
@@ -114,6 +161,11 @@ def check_and_advance_turn(game):
         current = game['current_player']
         game['scores'][current] = game['scores'].get(current, 0) + TIMEOUT_PENALTY
         game['last_timeout_player'] = current
+        
+        # Incrémenter le compteur de timeouts consécutifs
+        if 'consecutive_timeouts' not in game:
+            game['consecutive_timeouts'] = {}
+        game['consecutive_timeouts'][current] = game['consecutive_timeouts'].get(current, 0) + 1
         
         # Passer au joueur suivant
         num_players = len(game['players'])
@@ -166,7 +218,8 @@ def create_game():
         'turn_start_time': now,
         'turn_skipped': False,
         'round_timeout': False,
-        'started': False  # La partie n'est pas encore lancée
+        'started': False,  # La partie n'est pas encore lancée
+        'consecutive_timeouts': {1: 0}  # Compteur de timeouts consécutifs par joueur
     }
     
     return jsonify({
@@ -199,6 +252,27 @@ def join_game():
     player_id = len(game['players']) + 1
     game['players'][player_id] = player_name
     game['scores'][player_id] = 0
+    game['consecutive_timeouts'][player_id] = 0
+    
+    # Si la partie est déjà commencée, on la redémarre pour l'équité !
+    game_restarted = False
+    if game.get('started', False):
+        now = time.time()
+        # Reset complet de la manche
+        game['secret_word'] = random.choice(TARGETS)
+        game['guesses'] = []
+        game['current_player'] = 1
+        game['found'] = False
+        game['winner'] = None
+        game['round_start_time'] = now
+        game['turn_start_time'] = now
+        game['round_timeout'] = False
+        game['turn_skipped'] = False
+        # Reset tous les scores à 0 pour l'équité
+        for pid in game['players']:
+            game['scores'][pid] = 0
+            game['consecutive_timeouts'][pid] = 0
+        game_restarted = True
     
     return jsonify({
         'success': True,
@@ -206,7 +280,8 @@ def join_game():
         'player_id': player_id,
         'players': game['players'],
         'round_time_limit': ROUND_TIME_LIMIT,
-        'turn_time_limit': TURN_TIME_LIMIT
+        'turn_time_limit': TURN_TIME_LIMIT,
+        'game_restarted': game_restarted
     })
 
 @app.route('/api/start', methods=['POST'])
@@ -296,8 +371,19 @@ def make_guess():
         return jsonify({'success': False, 'error': 'Mot non reconnu (pas dans le dictionnaire)'})
     
     rank = ranks_for_secret[word]
-    points = calculate_points(rank)
+    
+    # Calculer la moyenne des 10 meilleurs rangs pour la pénalité de régression
+    avg_top_10 = get_avg_top_10(game)
+    points = calculate_points(rank, avg_top_10)
     indicator = get_indicator(rank)
+    
+    # Vérifier si c'est le nouveau meilleur rang → bonus !
+    is_new_best = False
+    if game['guesses']:
+        current_best = min(g['rank'] for g in game['guesses'])
+        if rank < current_best:
+            is_new_best = True
+            points += BEST_WORD_BONUS
     
     # Enregistrer la tentative
     guess_data = {
@@ -306,10 +392,16 @@ def make_guess():
         'points': points,
         'indicator': indicator,
         'player_id': player_id,
-        'player_name': game['players'][player_id]
+        'player_name': game['players'][player_id],
+        'is_new_best': is_new_best
     }
     game['guesses'].append(guess_data)
     game['scores'][player_id] = game['scores'].get(player_id, 0) + points
+    
+    # Reset le compteur de timeouts consécutifs (le joueur a répondu !)
+    if 'consecutive_timeouts' not in game:
+        game['consecutive_timeouts'] = {}
+    game['consecutive_timeouts'][player_id] = 0
     
     # Mot trouvé ?
     found = (rank == 1)
@@ -368,6 +460,14 @@ def get_state(code):
     # Trier les tentatives par rang
     sorted_guesses = sorted(game['guesses'], key=lambda x: x['rank'])
     
+    # Calculer le timer actuel pour chaque joueur
+    current_turn_limit = get_current_turn_limit(game)
+    is_reduced_timer = current_turn_limit < TURN_TIME_LIMIT
+    
+    # Récupérer les 20 mots les plus proches si la manche est terminée
+    game_ended = game['found'] or round_timeout
+    top_20 = get_top_20_words(game['secret_word']) if game_ended else None
+    
     return jsonify({
         'success': True,
         'players': game['players'],
@@ -376,11 +476,15 @@ def get_state(code):
         'current_player': game['current_player'],
         'found': game['found'],
         'winner': game['winner'],
-        'secret_word': game['secret_word'] if (game['found'] or round_timeout) else None,
+        'secret_word': game['secret_word'] if game_ended else None,
+        'top_20_words': top_20,
         'round_remaining': get_remaining_round_time(game),
         'turn_remaining': get_remaining_turn_time(game),
+        'turn_limit': current_turn_limit,
+        'is_reduced_timer': is_reduced_timer,
         'round_timeout': round_timeout,
-        'turn_skipped': turn_skipped
+        'turn_skipped': turn_skipped,
+        'avg_top_10': get_avg_top_10(game)
     })
 
 @app.route('/api/new_round', methods=['POST'])
@@ -405,6 +509,9 @@ def new_round():
     game['turn_start_time'] = now
     game['round_timeout'] = False
     game['turn_skipped'] = False
+    # Reset les compteurs de timeouts consécutifs (nouvelle manche)
+    for pid in game['players']:
+        game['consecutive_timeouts'][pid] = 0
     # Garder les scores !
     
     return jsonify({
@@ -417,8 +524,8 @@ def new_round():
 # Lancement
 # ======================
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))  # Port 5001 pour le test
-    print(f"\n[TEST] MODE TEST - Port {port}")
-    print(f"   Timer mot: {ROUND_TIME_LIMIT}s | Timer tour: {TURN_TIME_LIMIT}s")
-    print(f"   Penalite rang > {PENALTY_THRESHOLD}: -1pt | Timeout: {TIMEOUT_PENALTY}pt\n")
+    port = int(os.environ.get('PORT', 5000))
+    print(f"\n[SEMANTIX] Serveur démarré - Port {port}")
+    print(f"   Timer mot: {ROUND_TIME_LIMIT}s | Timer tour: {TURN_TIME_LIMIT}s (réduit à {REDUCED_TURN_TIME}s après {TIMEOUT_THRESHOLD} timeouts)")
+    print(f"   Penalite rang > moyenne top 10: -1pt | Timeout: {TIMEOUT_PENALTY}pt | Bonus meilleur mot: +{BEST_WORD_BONUS}pt\n")
     app.run(host='0.0.0.0', port=port, debug=True)

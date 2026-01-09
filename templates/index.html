@@ -3,47 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semantix</title>
+    <title>SEMANTCHIK</title>
+    <script>
+        // Code du salon depuis l'URL (injecté par Flask)
+        const URL_ROOM_CODE = {{ room_code|tojson|safe }};
+    </script>
     <style>
         :root {
-            --bg: #0d0d12;
-            --card: #16161d;
-            --border: #2a2a35;
-            --accent: #5c9eff;
-            --accent-soft: #3d6db3;
-            --danger: #e05555;
-            --warning: #d4a054;
-            --text: #e0e0e0;
-            --dim: #6a6a7a;
-            --hot: #c75050;
-            --warm: #b8864a;
-            --cool: #5a8fc7;
+            --bg: #fafafa;
+            --card: #fff;
+            --border: #ddd;
+            --border-dark: #999;
+            --text: #1a1a1a;
+            --text-muted: #666;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #ea580c;
+            --hot: #dc2626;
+            --warm: #ea580c;
+            --cool: #0891b2;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            font-size: 15px;
+            line-height: 1.5;
         }
         
         .container {
-            max-width: 900px;
+            max-width: 700px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px 16px;
         }
         
         header {
             text-align: center;
-            padding: 20px 0;
+            margin-bottom: 24px;
         }
         
         h1 {
-            font-size: 1.8rem;
-            color: var(--text);
-            font-weight: 600;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
         }
         
         .screen { display: none; }
@@ -52,63 +66,127 @@
         .card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
             padding: 24px;
-            margin: 16px 0;
+            margin-bottom: 16px;
         }
         
-        h2 { color: var(--text); margin-bottom: 16px; font-size: 1.1rem; font-weight: 500; }
+        h2 { 
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
         
         input[type="text"] {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
-            border-radius: 8px;
             background: var(--bg);
             color: var(--text);
             font-size: 1rem;
+            font-family: inherit;
             margin-bottom: 12px;
         }
         
-        input:focus { outline: none; border-color: var(--accent-soft); }
-        input::placeholder { color: var(--dim); }
+        input:focus { outline: none; border-color: var(--accent); }
+        input::placeholder { color: #aaa; }
+        input:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .btn {
             width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
+            padding: 12px 20px;
+            border: 1px solid var(--border-dark);
+            font-size: 0.9rem;
+            font-family: inherit;
             cursor: pointer;
-            transition: opacity 0.2s;
+            background: var(--card);
+            color: var(--text);
+            transition: background 0.15s;
         }
         
-        .btn:hover { opacity: 0.85; }
-        .btn-primary { background: var(--accent); color: #fff; }
-        .btn-secondary { background: var(--border); color: var(--text); }
+        .btn:hover { background: var(--bg); }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-primary:hover { background: var(--accent-hover); }
         
         .code-display {
             text-align: center;
-            padding: 20px;
+            padding: 24px;
             background: var(--bg);
-            border-radius: 8px;
             border: 1px solid var(--border);
+            margin: 16px 0;
         }
         
-        .code-display .label { color: var(--dim); font-size: 0.85rem; margin-bottom: 8px; }
+        .code-display .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
         .code-display .code {
-            font-size: 2.2rem;
-            font-weight: 600;
-            letter-spacing: 6px;
-            color: var(--accent);
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 0.3em;
+            margin-top: 8px;
         }
         
-        /* === ROUND TIMER (global) === */
+        /* === RULES BOX === */
+        .rules-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-bottom: 16px;
+            font-size: 0.8rem;
+        }
+        
+        .rules-box h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .rule-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+        
+        .rule-item .range { color: var(--text-muted); }
+        .rule-item .pts { font-weight: 600; }
+        .rule-item .pts.bonus { color: var(--success); }
+        .rule-item .pts.malus { color: var(--danger); }
+        
+        .rules-divider {
+            grid-column: span 2;
+            border-top: 1px solid var(--border);
+            margin: 8px 0;
+        }
+        
+        .cooldown-rules {
+            grid-column: span 2;
+            padding-top: 4px;
+        }
+        
+        .cooldown-rules .title {
+            color: var(--danger);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        /* === ROUND TIMER === */
         .round-timer-bar {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 10px;
             padding: 12px 16px;
             margin-bottom: 16px;
             display: flex;
@@ -116,232 +194,280 @@
             justify-content: space-between;
         }
         
+        .round-timer-bar .info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
         .round-timer-bar .label {
-            font-size: 0.85rem;
-            color: var(--dim);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .round-timer-bar .round-badge {
+            background: var(--text);
+            color: var(--card);
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
         }
         
         .round-timer-bar .time {
             font-size: 1.4rem;
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-            color: var(--text);
+            font-weight: 700;
         }
         
         .round-timer-bar.warning .time { color: var(--warning); }
         .round-timer-bar.danger .time { color: var(--danger); }
         
-        /* === SCORES avec timer intégré === */
+        /* === COOLDOWN BAR === */
+        .cooldown-bar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .cooldown-bar.active {
+            display: block;
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+        
+        .cooldown-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .cooldown-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cooldown-icon { font-size: 1.2rem; }
+        
+        .cooldown-text .title {
+            font-weight: 600;
+            color: var(--danger);
+            font-size: 0.85rem;
+        }
+        
+        .cooldown-text .penalty {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .cooldown-text .penalty strong { color: var(--danger); }
+        
+        .cooldown-timer {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--danger);
+        }
+        
+        .cooldown-progress {
+            margin-top: 10px;
+            height: 3px;
+            background: var(--border);
+        }
+        
+        .cooldown-progress-bar {
+            height: 100%;
+            background: var(--danger);
+            transition: width 0.1s linear;
+        }
+        
+        /* === SCORES === */
         .scores {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 16px;
             flex-wrap: wrap;
         }
         
         .score-box {
             flex: 1;
-            min-width: 100px;
-            background: var(--card);
-            border: 2px solid var(--border);
-            padding: 12px;
-            border-radius: 10px;
+            min-width: 90px;
             text-align: center;
-            transition: border-color 0.3s, background 0.3s;
+            padding: 12px 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
         }
         
-        .score-box.active-turn {
-            border-color: var(--accent);
-            background: rgba(92, 158, 255, 0.06);
+        .score-box.me { border-color: var(--accent); }
+        
+        .score-box .name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .score-box .name { 
-            font-size: 0.9rem; 
-            color: var(--text);
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-        
-        .score-box .pts { 
-            font-size: 1.4rem; 
-            font-weight: 600; 
-            color: var(--text); 
+        .score-box .pts {
+            font-size: 1.3rem;
+            font-weight: 700;
         }
         
         .score-box .pts.negative { color: var(--danger); }
         
-        /* Timer sous le joueur actif */
-        .score-box .turn-timer {
-            display: none;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid var(--border);
-        }
-        
-        .score-box.active-turn .turn-timer {
-            display: block;
-        }
-        
-        .score-box .turn-timer .timer-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-            color: var(--accent);
-        }
-        
-        .score-box .turn-timer.warning .timer-value { color: var(--warning); }
-        .score-box .turn-timer.danger .timer-value { color: var(--danger); }
-        
-        /* Timer réduit (pénalité) */
-        .score-box .turn-timer.reduced .timer-label {
-            display: block;
-            font-size: 0.7rem;
-            color: var(--danger);
-            margin-top: 2px;
-        }
-        
-        .score-box .turn-timer.reduced .timer-value {
-            color: var(--danger);
-        }
-        
-        /* Notification de restart */
-        .restart-notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--warning);
-            color: #000;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            z-index: 200;
-            animation: fadeInOut 4s ease-out forwards;
-        }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            85% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-        
         /* === GUESS FORM === */
         .guess-form {
             display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
         
-        .guess-form input { flex: 1; margin-bottom: 0; }
-        .guess-form .btn { width: auto; padding: 12px 24px; }
+        .guess-form input {
+            flex: 1;
+            margin-bottom: 0;
+            font-size: 1.1rem;
+            padding: 14px;
+        }
+        
+        .guess-form .btn {
+            width: auto;
+            padding: 14px 24px;
+            font-weight: 600;
+        }
         
         .error-msg {
-            background: rgba(224, 85, 85, 0.15);
+            background: #fef2f2;
             color: var(--danger);
-            padding: 10px 14px;
-            border-radius: 6px;
-            margin-bottom: 12px;
+            padding: 12px 16px;
+            border: 1px solid #fecaca;
+            margin-bottom: 16px;
             display: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         
         .error-msg.show { display: block; }
         
+        /* === NOTIFICATION === */
+        .notification {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--warning);
+            color: #fff;
+            padding: 12px 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 200;
+            animation: slideDown 0.3s ease-out, fadeOut 0.5s ease-out 3s forwards;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+        
         /* === BOARD === */
         .board {
-            background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
+            background: var(--card);
         }
         
         .board-header {
-            color: var(--dim);
-            margin-bottom: 12px;
-            font-size: 0.8rem;
+            padding: 12px 16px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
             display: flex;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
         }
         
-        .board-header strong {
-            color: var(--accent);
+        .board-content {
+            max-height: 350px;
+            overflow-y: auto;
         }
         
         .guess-row {
             display: flex;
             align-items: center;
-            padding: 10px 12px;
-            background: var(--bg);
-            border-radius: 6px;
-            margin: 6px 0;
-            border-left: 3px solid var(--border);
-            transition: all 0.3s ease;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
         }
         
-        .guess-row.hot { border-color: var(--hot); }
-        .guess-row.warm { border-color: var(--warm); }
-        .guess-row.cool { border-color: var(--cool); }
-        .guess-row.penalty { border-color: var(--danger); background: rgba(224,85,85,0.08); }
+        .guess-row:last-child { border-bottom: none; }
         
-        /* Animation pour le dernier mot */
+        .guess-row.hot { background: #fef2f2; }
+        .guess-row.hot .rank { color: var(--hot); }
+        .guess-row.warm { background: #fff7ed; }
+        .guess-row.warm .rank { color: var(--warm); }
+        .guess-row.cool { background: #ecfeff; }
+        .guess-row.cool .rank { color: var(--cool); }
+        
         .guess-row.latest {
-            background: rgba(92, 158, 255, 0.12);
-            border-left-width: 4px;
-            animation: slideIn 0.4s ease-out, pulse 0.6s ease-out;
+            animation: highlight 0.5s ease-out;
         }
         
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(92, 158, 255, 0.4); }
-            70% { box-shadow: 0 0 0 8px rgba(92, 158, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(92, 158, 255, 0); }
+        @keyframes highlight {
+            from { background: #dbeafe; }
         }
         
         .guess-row .attempt-num {
-            font-size: 0.75rem;
-            color: var(--dim);
+            font-size: 0.7rem;
+            color: var(--text-muted);
             min-width: 28px;
-            margin-right: 8px;
         }
         
-        .guess-row .icon { font-size: 1rem; margin-right: 10px; }
-        .guess-row .rank { font-weight: 600; min-width: 60px; font-size: 0.9rem; color: var(--dim); }
-        .guess-row .word { flex: 1; font-weight: 500; }
-        .guess-row .player { color: var(--dim); font-size: 0.8rem; margin-right: 10px; }
-        .guess-row .points { font-weight: 600; color: var(--accent); font-size: 0.9rem; }
+        .guess-row .icon { font-size: 1rem; margin-right: 10px; width: 20px; text-align: center; }
+        .guess-row .rank { font-weight: 600; min-width: 50px; font-size: 0.85rem; color: var(--text-muted); }
+        .guess-row .word { flex: 1; font-weight: 600; }
+        .guess-row .player { color: var(--text-muted); font-size: 0.8rem; margin-right: 12px; }
+        .guess-row .points { font-weight: 600; color: var(--success); min-width: 45px; text-align: right; }
         .guess-row .points.negative { color: var(--danger); }
-        
-        .best-badge {
-            font-size: 0.8rem;
-            margin-left: 4px;
-        }
         
         .empty-msg {
             text-align: center;
-            color: var(--dim);
-            padding: 30px;
+            padding: 40px 24px;
+            color: var(--text-muted);
             font-size: 0.9rem;
+        }
+        
+        /* === PLAYER LIST === */
+        .player-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .player-item:last-child { border-bottom: none; }
+        
+        .player-item .num {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
         
         /* === MODAL === */
         .modal {
             display: none;
             position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
             align-items: center;
             justify-content: center;
             z-index: 100;
@@ -353,104 +479,124 @@
             background: var(--card);
             border: 1px solid var(--border);
             padding: 32px;
-            border-radius: 16px;
             text-align: center;
-            max-width: 360px;
+            max-width: 380px;
+            margin: 20px;
+            width: 100%;
         }
         
-        .modal-box h2 { font-size: 1.4rem; margin-bottom: 8px; font-weight: 500; }
-        .modal-box .secret { font-size: 2rem; color: var(--accent); margin: 16px 0; font-weight: 600; }
-        .modal-box .winner { color: var(--dim); margin-bottom: 20px; font-size: 0.9rem; }
-        .modal-box .btn { margin-top: 10px; }
+        .modal-box h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .modal-box .secret {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 20px 0;
+            padding: 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        
+        .modal-box .winner {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+        
+        .modal-box .btn { margin-top: 8px; }
         
         .modal-box.timeout h2 { color: var(--danger); }
         
         .top-words {
             background: var(--bg);
-            border-radius: 8px;
+            border: 1px solid var(--border);
             padding: 12px;
             margin: 16px 0;
-            max-height: 200px;
+            max-height: 160px;
             overflow-y: auto;
             text-align: left;
         }
         
         .top-words-title {
-            font-size: 0.8rem;
-            color: var(--dim);
+            font-size: 0.7rem;
+            color: var(--text-muted);
             margin-bottom: 8px;
             text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         .top-words-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 5px;
             justify-content: center;
         }
         
         .top-word-item {
             background: var(--card);
             padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             border: 1px solid var(--border);
         }
         
-        .top-word-item .tw-rank {
-            color: var(--dim);
-            margin-right: 4px;
-        }
+        .top-word-item .tw-rank { color: var(--text-muted); margin-right: 3px; }
+        .top-word-item .tw-word { font-weight: 500; }
         
-        .top-word-item .tw-word {
-            color: var(--text);
-        }
-        
-        /* === PLAYER LIST === */
-        .player-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 12px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            margin: 6px 0;
-        }
-        
-        .player-item .num {
-            width: 28px;
-            height: 28px;
-            background: var(--accent);
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-right: 12px;
+        /* Responsive */
+        @media (max-width: 500px) {
+            .guess-form { flex-direction: column; }
+            .guess-form .btn { width: 100%; }
+            .rules-grid { grid-template-columns: 1fr; }
+            .rules-divider, .cooldown-rules { grid-column: span 1; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Semantix</h1>
+            <h1>SEMANTCHIK</h1>
+            <p class="subtitle">Trouve le mot secret par similarité sémantique</p>
         </header>
         
         <!-- Menu -->
         <div id="menu-screen" class="screen active">
             <div class="card">
-                <h2>Créer une partie</h2>
-                <input type="text" id="create-name" placeholder="Pseudo" maxlength="15">
-                <button class="btn btn-primary" onclick="createGame()">Créer</button>
+                <h2>Créer un salon</h2>
+                <input type="text" id="create-name" placeholder="Ton pseudo" maxlength="15">
+                <button class="btn btn-primary" onclick="createRoom()">Créer</button>
             </div>
             
             <div class="card">
-                <h2>Rejoindre</h2>
+                <h2>Rejoindre un salon</h2>
                 <input type="text" id="join-code" placeholder="Code (ex: ABCD)" maxlength="4" style="text-transform: uppercase;">
-                <input type="text" id="join-name" placeholder="Pseudo" maxlength="15">
-                <button class="btn btn-secondary" onclick="joinGame()">Rejoindre</button>
+                <input type="text" id="join-name" placeholder="Ton pseudo" maxlength="15">
+                <button class="btn btn-secondary" onclick="joinRoom()">Rejoindre</button>
+            </div>
+            
+            <!-- Règles des points -->
+            <div class="rules-box">
+                <h3>Règles des points</h3>
+                <div class="rules-grid">
+                    <div class="rule-item"><span class="range">Rang 1 (trouvé!) 🎉</span><span class="pts bonus">+100</span></div>
+                    <div class="rule-item"><span class="range">Rang 2-10 🔥</span><span class="pts bonus">+15</span></div>
+                    <div class="rule-item"><span class="range">Rang 11-50 🌡️</span><span class="pts bonus">+10</span></div>
+                    <div class="rule-item"><span class="range">Rang 51-100 ☀️</span><span class="pts bonus">+5</span></div>
+                    <div class="rule-item"><span class="range">Rang 101-500 🌤️</span><span class="pts bonus">+2</span></div>
+                    <div class="rule-item"><span class="range">Rang 501-1000 ❄️</span><span class="pts bonus">+1</span></div>
+                    <div class="rule-item"><span class="range">Rang 1001-10000 🥶</span><span class="pts">0</span></div>
+                    <div class="rule-item"><span class="range">Rang > 10000 💀</span><span class="pts malus">-1</span></div>
+                    <div class="rules-divider"></div>
+                    <div class="cooldown-rules">
+                        <div class="title">⏳ Cooldown (10s après chaque mot, s'additionnent !)</div>
+                        <div>Jouer pendant le cooldown : <strong class="pts malus">-1</strong>, puis <strong class="pts malus">-2</strong>, <strong class="pts malus">-4</strong>, <strong class="pts malus">-8</strong>... (×2)</div>
+                        <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">⚠️ Un nouveau joueur = partie redémarrée</div>
+                    </div>
+                </div>
             </div>
             
             <div id="menu-error" class="error-msg"></div>
@@ -459,34 +605,58 @@
         <!-- Lobby -->
         <div id="lobby-screen" class="screen">
             <div class="card">
-                <h2>Code de partie</h2>
+                <h2>Code du salon</h2>
                 <div class="code-display">
-                    <div class="label">Partagez ce code</div>
+                    <div class="label">Partage ce lien</div>
                     <div class="code" id="lobby-code">----</div>
                 </div>
+                
+                <button class="btn btn-secondary" onclick="copyLink()" style="margin-top: 12px;" id="copy-btn">
+                    📋 Copier le lien
+                </button>
                 
                 <h2 style="margin-top: 20px;">Joueurs</h2>
                 <div id="lobby-players"></div>
                 
                 <button class="btn btn-primary" onclick="startGame()" style="margin-top: 16px;">
-                    Commencer
+                    Lancer la partie
                 </button>
             </div>
         </div>
         
         <!-- Jeu -->
         <div id="game-screen" class="screen">
-            <!-- Timer global du mot -->
+            <!-- Timer global -->
             <div class="round-timer-bar" id="round-timer">
-                <span class="label">Temps restant pour ce mot</span>
+                <div class="info">
+                    <span class="round-badge" id="round-badge">Manche 1</span>
+                    <span class="label">Temps restant</span>
+                </div>
                 <span class="time" id="round-time">5:00</span>
             </div>
             
-            <!-- Scores avec timer intégré sous le joueur actif -->
+            <!-- Cooldown -->
+            <div class="cooldown-bar" id="cooldown-bar">
+                <div class="cooldown-content">
+                    <div class="cooldown-info">
+                        <span class="cooldown-icon">⏳</span>
+                        <div class="cooldown-text">
+                            <div class="title">Cooldown actif</div>
+                            <div class="penalty">Pénalité si tu joues : <strong id="next-penalty">-1</strong></div>
+                        </div>
+                    </div>
+                    <div class="cooldown-timer" id="cooldown-time">10s</div>
+                </div>
+                <div class="cooldown-progress">
+                    <div class="cooldown-progress-bar" id="cooldown-progress"></div>
+                </div>
+            </div>
+            
+            <!-- Scores -->
             <div class="scores" id="scores-bar"></div>
             
             <div class="guess-form">
-                <input type="text" id="guess-input" placeholder="Entrez un mot..." autocomplete="off">
+                <input type="text" id="guess-input" placeholder="Entre un mot..." autocomplete="off">
                 <button class="btn btn-primary" onclick="submitGuess()">OK</button>
             </div>
             
@@ -494,11 +664,11 @@
             
             <div class="board">
                 <div class="board-header">
-                    <span>Tentatives triées par proximité</span>
-                    <span id="best-rank-display"></span>
+                    <span>Mots triés par proximité</span>
+                    <span id="guess-count">0 tentatives</span>
                 </div>
                 <div class="board-content" id="guesses-list">
-                    <div class="empty-msg">Aucune tentative pour l'instant</div>
+                    <div class="empty-msg">Sois le premier à proposer un mot !</div>
                 </div>
             </div>
         </div>
@@ -506,48 +676,138 @@
         <!-- Modal Victoire -->
         <div id="win-modal" class="modal">
             <div class="modal-box">
-                <h2>Trouvé !</h2>
+                <h2>🎉 Trouvé !</h2>
                 <div class="secret" id="modal-secret">---</div>
                 <div class="winner" id="modal-winner">Bravo !</div>
                 <div class="top-words" id="win-top-words"></div>
-                <button class="btn btn-primary" onclick="newRound()">Nouvelle manche</button>
-                <button class="btn btn-secondary" onclick="backToMenu()">Menu</button>
+                <button class="btn btn-primary" onclick="newRound()">Manche suivante</button>
+                <button class="btn btn-secondary" onclick="backToMenu()">Quitter</button>
             </div>
         </div>
         
         <!-- Modal Timeout -->
         <div id="timeout-modal" class="modal">
             <div class="modal-box timeout">
-                <h2>Temps écoulé</h2>
+                <h2>⏰ Temps écoulé</h2>
                 <div class="secret" id="timeout-secret">---</div>
                 <div class="winner">Personne n'a trouvé à temps</div>
                 <div class="top-words" id="timeout-top-words"></div>
-                <button class="btn btn-primary" onclick="newRound()">Mot suivant</button>
-                <button class="btn btn-secondary" onclick="backToMenu()">Menu</button>
+                <button class="btn btn-primary" onclick="newRound()">Manche suivante</button>
+                <button class="btn btn-secondary" onclick="backToMenu()">Quitter</button>
             </div>
         </div>
     </div>
     
     <script>
-        let gameCode = null;
+        // ============================================
+        // STATE
+        // ============================================
+        let roomCode = null;
         let playerId = null;
         let playerName = null;
         let pollInterval = null;
         let lobbyPollInterval = null;
+        let cooldownInterval = null;
         let roundTimeLimit = 300;
-        let turnTimeLimit = 15;
-        let currentPlayer = 1;
+        let cooldownDuration = 10;
         let lastGuessCount = 0;
+        let currentCooldown = 0;
+        let maxCooldown = 10;
+        let currentRoundNumber = 1;
         let lastPlayerCount = 0;
         
-        function showNotification(message) {
-            const notif = document.createElement('div');
-            notif.className = 'restart-notification';
-            notif.textContent = message;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 4000);
+        // ============================================
+        // PERSISTENCE - LocalStorage
+        // ============================================
+        function saveSession() {
+            if (roomCode && playerId && playerName) {
+                localStorage.setItem('semantchik_session', JSON.stringify({
+                    roomCode, playerId, playerName
+                }));
+            }
         }
         
+        function loadSession() {
+            const saved = localStorage.getItem('semantchik_session');
+            if (saved) {
+                try { return JSON.parse(saved); } catch (e) { return null; }
+            }
+            return null;
+        }
+        
+        function clearSession() {
+            localStorage.removeItem('semantchik_session');
+        }
+        
+        // ============================================
+        // URL MANAGEMENT
+        // ============================================
+        function updateURL(code) {
+            if (code) {
+                window.history.pushState({}, '', '/' + code);
+            } else {
+                window.history.pushState({}, '', '/');
+            }
+        }
+        
+        // ============================================
+        // AUTO-REJOIN / URL JOIN
+        // ============================================
+        window.addEventListener('load', async () => {
+            // Priority 1: Try to rejoin existing session
+            const session = loadSession();
+            if (session && session.roomCode && session.playerId) {
+                try {
+                    const res = await fetch('/api/join', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            code: session.roomCode,
+                            name: session.playerName,
+                            player_id: session.playerId
+                        })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        roomCode = data.code;
+                        playerId = data.player_id;
+                        playerName = session.playerName;
+                        roundTimeLimit = data.round_time_limit;
+                        cooldownDuration = data.cooldown_duration;
+                        currentRoundNumber = data.round_number || 1;
+                        
+                        saveSession();
+                        updateURL(roomCode);
+                        
+                        if (data.started) {
+                            showScreen('game-screen');
+                            startPolling();
+                            document.getElementById('guess-input').focus();
+                        } else {
+                            document.getElementById('lobby-code').textContent = roomCode;
+                            updateLobbyPlayers(data.players);
+                            showScreen('lobby-screen');
+                            startLobbyPolling();
+                        }
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Could not rejoin session', e);
+                }
+                clearSession();
+            }
+            
+            // Priority 2: If URL contains a room code, show join screen with code pre-filled
+            if (URL_ROOM_CODE) {
+                document.getElementById('join-code').value = URL_ROOM_CODE;
+                document.getElementById('join-name').focus();
+            }
+        });
+        
+        // ============================================
+        // UI HELPERS
+        // ============================================
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -563,10 +823,36 @@
         function formatTime(seconds) {
             const m = Math.floor(seconds / 60);
             const s = seconds % 60;
-            return m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${s}`;
+            return m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${s}s`;
         }
         
-        async function createGame() {
+        function copyLink() {
+            const url = window.location.origin + '/' + roomCode;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.textContent = '✓ Lien copié !';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copier le lien';
+                }, 2000);
+            });
+        }
+        
+        function showNotification(message) {
+            // Remove existing notification
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3500);
+        }
+        
+        // ============================================
+        // ROOM MANAGEMENT
+        // ============================================
+        async function createRoom() {
             const name = document.getElementById('create-name').value.trim() || 'Joueur';
             playerName = name;
             
@@ -579,12 +865,16 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    gameCode = data.code;
+                    roomCode = data.code;
                     playerId = data.player_id;
                     roundTimeLimit = data.round_time_limit;
-                    turnTimeLimit = data.turn_time_limit;
-                    document.getElementById('lobby-code').textContent = gameCode;
-                    updateLobbyPlayers({ 1: name });
+                    cooldownDuration = data.cooldown_duration;
+                    
+                    saveSession();
+                    updateURL(roomCode);
+                    
+                    document.getElementById('lobby-code').textContent = roomCode;
+                    updateLobbyPlayers({ [playerId]: name });
                     showScreen('lobby-screen');
                     startLobbyPolling();
                 } else {
@@ -595,7 +885,7 @@
             }
         }
         
-        async function joinGame() {
+        async function joinRoom() {
             const code = document.getElementById('join-code').value.trim().toUpperCase();
             const name = document.getElementById('join-name').value.trim() || 'Joueur';
             playerName = name;
@@ -614,14 +904,25 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    gameCode = data.code;
+                    roomCode = data.code;
                     playerId = data.player_id;
                     roundTimeLimit = data.round_time_limit;
-                    turnTimeLimit = data.turn_time_limit;
-                    document.getElementById('lobby-code').textContent = gameCode;
-                    updateLobbyPlayers(data.players);
-                    showScreen('lobby-screen');
-                    startLobbyPolling();
+                    cooldownDuration = data.cooldown_duration;
+                    currentRoundNumber = data.round_number || 1;
+                    
+                    saveSession();
+                    updateURL(roomCode);
+                    
+                    if (data.started) {
+                        showScreen('game-screen');
+                        startPolling();
+                        document.getElementById('guess-input').focus();
+                    } else {
+                        document.getElementById('lobby-code').textContent = roomCode;
+                        updateLobbyPlayers(data.players);
+                        showScreen('lobby-screen');
+                        startLobbyPolling();
+                    }
                 } else {
                     showError('menu-error', data.error);
                 }
@@ -633,25 +934,29 @@
         function updateLobbyPlayers(players) {
             const container = document.getElementById('lobby-players');
             container.innerHTML = '';
+            let index = 1;
             for (const [id, name] of Object.entries(players)) {
+                const isMe = id === playerId;
                 container.innerHTML += `
                     <div class="player-item">
-                        <div class="num">${id}</div>
-                        <div>${name}${parseInt(id) === playerId ? ' (vous)' : ''}</div>
+                        <div class="num">${index}</div>
+                        <div>${name}${isMe ? ' (toi)' : ''}</div>
                     </div>
                 `;
+                index++;
             }
         }
         
         async function refreshLobby() {
-            if (!gameCode) return;
+            if (!roomCode) return;
             
             try {
-                const res = await fetch(`/api/lobby/${gameCode}`);
+                const res = await fetch(`/api/lobby/${roomCode}`);
                 const data = await res.json();
                 
                 if (data.success) {
                     updateLobbyPlayers(data.players);
+                    currentRoundNumber = data.round_number || 1;
                     
                     if (data.started) {
                         stopLobbyPolling();
@@ -684,18 +989,17 @@
             await fetch('/api/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: gameCode })
+                body: JSON.stringify({ code: roomCode })
             });
-            
-            // Initialiser le compteur de joueurs
-            const lobbyPlayers = document.getElementById('lobby-players').children.length;
-            lastPlayerCount = lobbyPlayers;
             
             showScreen('game-screen');
             startPolling();
             document.getElementById('guess-input').focus();
         }
         
+        // ============================================
+        // GAMEPLAY
+        // ============================================
         async function submitGuess() {
             const input = document.getElementById('guess-input');
             const word = input.value.trim();
@@ -705,17 +1009,16 @@
                 const res = await fetch('/api/guess', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: gameCode, player_id: playerId, word })
+                    body: JSON.stringify({ code: roomCode, player_id: playerId, word })
                 });
                 const data = await res.json();
                 
                 if (data.success) {
                     input.value = '';
-                    // refreshState va gérer l'affichage du modal avec les top 20 mots
+                    startCooldown(data.new_cooldown);
                     refreshState();
                 } else {
                     if (data.timeout) {
-                        // refreshState va gérer l'affichage du modal avec les top 20 mots
                         refreshState();
                     } else {
                         showError('guess-error', data.error);
@@ -726,31 +1029,76 @@
             }
         }
         
+        function startCooldown(duration) {
+            currentCooldown = duration;
+            maxCooldown = duration; // Track the max for percentage calculation
+            updateCooldownUI();
+            
+            if (cooldownInterval) clearInterval(cooldownInterval);
+            cooldownInterval = setInterval(() => {
+                currentCooldown = Math.max(0, currentCooldown - 0.1);
+                updateCooldownUI();
+                if (currentCooldown <= 0) {
+                    clearInterval(cooldownInterval);
+                    cooldownInterval = null;
+                }
+            }, 100);
+        }
+        
+        function updateCooldownUI() {
+            const bar = document.getElementById('cooldown-bar');
+            const timeEl = document.getElementById('cooldown-time');
+            const progressEl = document.getElementById('cooldown-progress');
+            
+            if (currentCooldown > 0) {
+                bar.classList.add('active');
+                timeEl.textContent = Math.ceil(currentCooldown) + 's';
+                // Percentage based on current max cooldown (capped at 100%)
+                const percent = Math.min(100, (currentCooldown / maxCooldown) * 100);
+                progressEl.style.width = percent + '%';
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+        
         async function refreshState() {
-            if (!gameCode) return;
+            if (!roomCode) return;
             
             try {
-                const res = await fetch(`/api/state/${gameCode}`);
+                const res = await fetch(`/api/state/${roomCode}?player_id=${playerId}`);
                 const data = await res.json();
                 
                 if (data.success) {
-                    currentPlayer = data.current_player;
-                    
-                    // Détecter si un nouveau joueur a rejoint (partie redémarrée)
+                    // Détecter si un nouveau joueur a rejoint (game restart)
                     const playerCount = Object.keys(data.players).length;
                     if (lastPlayerCount > 0 && playerCount > lastPlayerCount) {
-                        showNotification('🔄 Nouveau joueur ! Partie redémarrée pour l\'équité');
-                        lastGuessCount = 0;
+                        showNotification('🔄 Nouveau joueur ! Partie redémarrée');
+                        currentCooldown = 0;
+                        updateCooldownUI();
                     }
                     lastPlayerCount = playerCount;
+                    
+                    if (data.round_number !== currentRoundNumber) {
+                        currentRoundNumber = data.round_number;
+                        lastGuessCount = 0;
+                    }
+                    
+                    if (data.player_cooldown > currentCooldown) {
+                        startCooldown(data.player_cooldown);
+                    }
+                    
+                    document.getElementById('next-penalty').textContent = '-' + data.next_penalty;
                     
                     updateGameUI(data);
                     
                     if (data.round_timeout && !document.getElementById('timeout-modal').classList.contains('active')) {
                         showTimeoutModal(data.secret_word, data.top_20_words);
                     } else if (data.found && !document.getElementById('win-modal').classList.contains('active')) {
-                        showWinModal(data.secret_word, data.players[data.winner], data.top_20_words);
+                        showWinModal(data.secret_word, data.winner_name, data.top_20_words);
                     }
+                } else if (data.error === 'Salon non trouvé') {
+                    clearSession();
+                    backToMenu();
                 }
             } catch (e) {
                 console.error('Erreur refresh', e);
@@ -758,82 +1106,58 @@
         }
         
         function updateGameUI(data) {
-            // Timer global du mot
+            // Round timer
             const roundEl = document.getElementById('round-time');
             const roundBar = document.getElementById('round-timer');
+            const roundBadge = document.getElementById('round-badge');
+            
             roundEl.textContent = formatTime(data.round_remaining);
+            roundBadge.textContent = 'Manche ' + data.round_number;
+            
             roundBar.classList.remove('warning', 'danger');
             if (data.round_remaining <= 30) roundBar.classList.add('danger');
             else if (data.round_remaining <= 60) roundBar.classList.add('warning');
             
-            // Input activé/désactivé
-            const isMyTurn = data.current_player === playerId;
-            document.getElementById('guess-input').disabled = !isMyTurn;
-            
-            // Afficher la moyenne top 10
-            const bestRankDisplay = document.getElementById('best-rank-display');
-            if (data.avg_top_10) {
-                const avgRounded = Math.round(data.avg_top_10);
-                bestRankDisplay.innerHTML = `· Moyenne top 10: <strong>${avgRounded}</strong> · Faire pire = -1 pt`;
-            } else {
-                bestRankDisplay.innerHTML = '· Rang > 1000 = -1 pt · Timeout = -1 pt';
-            }
-            
-            // Scores avec timer intégré sous le joueur actif
+            // Scores
             const scoresBar = document.getElementById('scores-bar');
             scoresBar.innerHTML = '';
             for (const [id, name] of Object.entries(data.players)) {
                 const score = data.scores[id] || 0;
-                const isActiveTurn = parseInt(id) === data.current_player;
+                const isMe = id === playerId;
                 const negativeClass = score < 0 ? 'negative' : '';
-                const isMe = parseInt(id) === playerId;
-                
-                let timerClass = '';
-                if (data.turn_remaining <= 5) timerClass = 'danger';
-                else if (data.turn_remaining <= 8) timerClass = 'warning';
-                
-                // Ajouter la classe "reduced" si le timer est réduit
-                const isReduced = data.is_reduced_timer && isActiveTurn;
-                if (isReduced) timerClass += ' reduced';
-                
-                const reducedLabel = isReduced ? '<div class="timer-label">⚡ Timer réduit !</div>' : '';
                 
                 scoresBar.innerHTML += `
-                    <div class="score-box${isActiveTurn ? ' active-turn' : ''}">
-                        <div class="name">${name}${isMe ? ' (vous)' : ''}</div>
-                        <div class="pts ${negativeClass}">${score} pts</div>
-                        <div class="turn-timer ${timerClass}">
-                            <div class="timer-value">${data.turn_remaining}s</div>
-                            ${reducedLabel}
-                        </div>
+                    <div class="score-box${isMe ? ' me' : ''}">
+                        <div class="name">${name}${isMe ? ' (toi)' : ''}</div>
+                        <div class="pts ${negativeClass}">${score}</div>
                     </div>
                 `;
             }
             
-            // Détecter si nouveau mot ajouté
+            // Guess count
+            document.getElementById('guess-count').textContent = data.guesses.length + ' tentative' + (data.guesses.length !== 1 ? 's' : '');
+            
+            // Detect new guesses
             const newGuessAdded = data.guesses.length > lastGuessCount;
             lastGuessCount = data.guesses.length;
             
-            // Trouver le dernier mot ajouté (par ordre d'insertion, pas de rang)
             let latestWord = null;
-            if (data.guesses.length > 0) {
-                // On garde le dernier mot ajouté en mémoire
-                latestWord = data.guesses[data.guesses.length - 1].word;
+            if (data.guesses.length > 0 && newGuessAdded) {
+                const sorted = [...data.guesses].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                latestWord = sorted[0].word;
             }
             
-            // Liste des tentatives
+            // Guesses list
             const guessesList = document.getElementById('guesses-list');
             if (data.guesses.length === 0) {
-                guessesList.innerHTML = '<div class="empty-msg">Aucune tentative pour l\'instant</div>';
+                guessesList.innerHTML = '<div class="empty-msg">Sois le premier à proposer un mot !</div>';
             } else {
                 guessesList.innerHTML = '';
                 
-                // Créer une map pour l'ordre d'insertion
                 const insertionOrder = {};
-                data.guesses.forEach((g, idx) => {
-                    if (!insertionOrder[g.word]) {
-                        insertionOrder[g.word] = Object.keys(insertionOrder).length + 1;
-                    }
+                const sortedByTime = [...data.guesses].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                sortedByTime.forEach((g, idx) => {
+                    insertionOrder[g.word] = idx + 1;
                 });
                 
                 for (const g of data.guesses) {
@@ -841,26 +1165,23 @@
                     if (g.rank <= 10) tempClass = 'hot';
                     else if (g.rank <= 50) tempClass = 'warm';
                     else if (g.rank <= 500) tempClass = 'cool';
-                    else if (g.rank > 1000) tempClass = 'penalty';
                     
-                    const isLatest = newGuessAdded && g.word === latestWord;
+                    const isLatest = g.word === latestWord;
                     const latestClass = isLatest ? ' latest' : '';
                     
-                    const pointsClass = g.points < 0 ? 'negative' : '';
-                    const pointsPrefix = g.points >= 0 ? '+' : '';
-                    const bestBadge = g.is_new_best ? '<span class="best-badge">👑</span>' : '';
+                    const pointsClass = g.total_points < 0 ? 'negative' : '';
+                    const pointsPrefix = g.total_points >= 0 ? '+' : '';
                     
-                    // Trouver le numéro de tentative
                     const attemptNum = insertionOrder[g.word];
                     
                     guessesList.innerHTML += `
                         <div class="guess-row ${tempClass}${latestClass}">
                             <span class="attempt-num">#${attemptNum}</span>
                             <span class="icon">${g.indicator}</span>
-                            <span class="rank">${g.rank}${bestBadge}</span>
+                            <span class="rank">${g.rank}</span>
                             <span class="word">${g.word}</span>
                             <span class="player">${g.player_name}</span>
-                            <span class="points ${pointsClass}">${pointsPrefix}${g.points}</span>
+                            <span class="points ${pointsClass}">${pointsPrefix}${g.total_points}</span>
                         </div>
                     `;
                 }
@@ -870,7 +1191,7 @@
         function renderTopWords(top20) {
             if (!top20 || top20.length === 0) return '';
             
-            let html = '<div class="top-words-title">Les 20 mots les plus proches :</div>';
+            let html = '<div class="top-words-title">Les 20 mots les plus proches</div>';
             html += '<div class="top-words-list">';
             for (const item of top20) {
                 html += `<span class="top-word-item"><span class="tw-rank">${item.rank}.</span><span class="tw-word">${item.word}</span></span>`;
@@ -900,7 +1221,7 @@
                 const res = await fetch('/api/new_round', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: gameCode })
+                    body: JSON.stringify({ code: roomCode })
                 });
                 const data = await res.json();
                 
@@ -908,6 +1229,9 @@
                     document.getElementById('win-modal').classList.remove('active');
                     document.getElementById('timeout-modal').classList.remove('active');
                     lastGuessCount = 0;
+                    currentCooldown = 0;
+                    updateCooldownUI();
+                    currentRoundNumber = data.round_number;
                     startPolling();
                     refreshState();
                 }
@@ -921,17 +1245,22 @@
             document.getElementById('timeout-modal').classList.remove('active');
             stopPolling();
             stopLobbyPolling();
-            gameCode = null;
+            clearSession();
+            updateURL(null);
+            roomCode = null;
             playerId = null;
             lastGuessCount = 0;
+            currentCooldown = 0;
+            currentRoundNumber = 1;
             lastPlayerCount = 0;
+            updateCooldownUI();
             showScreen('menu-screen');
         }
         
         function startPolling() {
             stopPolling();
             refreshState();
-            pollInterval = setInterval(refreshState, 1000);
+            pollInterval = setInterval(refreshState, 800);
         }
         
         function stopPolling() {
@@ -941,12 +1270,15 @@
             }
         }
         
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
         document.getElementById('guess-input').addEventListener('keypress', e => {
             if (e.key === 'Enter') submitGuess();
         });
         
         document.getElementById('create-name').addEventListener('keypress', e => {
-            if (e.key === 'Enter') createGame();
+            if (e.key === 'Enter') createRoom();
         });
         
         document.getElementById('join-code').addEventListener('keypress', e => {
@@ -954,7 +1286,7 @@
         });
         
         document.getElementById('join-name').addEventListener('keypress', e => {
-            if (e.key === 'Enter') joinGame();
+            if (e.key === 'Enter') joinRoom();
         });
     </script>
 </body>

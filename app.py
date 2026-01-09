@@ -122,12 +122,15 @@ def get_player_cooldown_remaining(room, player_id):
     remaining = max(0, cooldown_end - time.time())
     return remaining
 
-def get_cooldown_penalty(room, player_id):
-    """Calcule la pénalité actuelle si le joueur est en cooldown."""
-    player_data = room['player_data'].get(player_id, {})
-    consecutive_cooldown_guesses = player_data.get('consecutive_cooldown_guesses', 0)
-    # Pénalité exponentielle: 1, 2, 4, 8, 16...
-    return BASE_PENALTY * (2 ** consecutive_cooldown_guesses)
+def get_cooldown_penalty(cooldown_time):
+    """Calcule la pénalité selon le temps de cooldown accumulé.
+    0-10s: -1, 10-20s: -2, 20-30s: -4, 30-40s: -8, etc.
+    """
+    if cooldown_time <= 0:
+        return 0
+    # Tranche de 10 secondes → exposant pour la puissance de 2
+    tranche = int(cooldown_time / COOLDOWN_DURATION)
+    return BASE_PENALTY * (2 ** tranche)
 
 def start_new_round(room):
     """Démarre une nouvelle manche dans le salon."""
@@ -139,9 +142,8 @@ def start_new_round(room):
     room['round_start_time'] = now
     room['round_timeout'] = False
     room['round_number'] = room.get('round_number', 0) + 1
-    # Reset les compteurs de cooldown pour tous les joueurs
+    # Reset les cooldowns pour tous les joueurs
     for pid in room['player_data']:
-        room['player_data'][pid]['consecutive_cooldown_guesses'] = 0
         room['player_data'][pid]['current_cooldown_end'] = 0
 
 # ======================
@@ -181,8 +183,7 @@ def create_room():
         'player_data': {
             player_id: {
                 'score': 0,
-                'current_cooldown_end': 0,
-                'consecutive_cooldown_guesses': 0
+                'current_cooldown_end': 0
             }
         },
         'secret_word': random.choice(TARGETS),
@@ -233,8 +234,6 @@ def join_room():
         room['players'][player_id] = player_name
         room['player_data'][player_id] = {
             'score': 0,
-            'last_guess_time': 0,
-            'consecutive_cooldown_guesses': 0,
             'current_cooldown_end': 0
         }
         
@@ -349,14 +348,11 @@ def make_guess():
     cooldown_penalty = 0
     
     if is_in_cooldown:
-        # Appliquer la pénalité exponentielle
-        cooldown_penalty = get_cooldown_penalty(room, player_id)
-        room['player_data'][player_id]['consecutive_cooldown_guesses'] += 1
+        # Appliquer la pénalité basée sur le temps de cooldown accumulé
+        cooldown_penalty = get_cooldown_penalty(cooldown_remaining)
         # ADDITIONNER le cooldown : ajouter 10s au cooldown restant
         room['player_data'][player_id]['current_cooldown_end'] = time.time() + cooldown_remaining + COOLDOWN_DURATION
     else:
-        # Reset le compteur si on a attendu le cooldown
-        room['player_data'][player_id]['consecutive_cooldown_guesses'] = 0
         # Nouveau cooldown de 10s
         room['player_data'][player_id]['current_cooldown_end'] = time.time() + COOLDOWN_DURATION
     
@@ -436,7 +432,8 @@ def get_state(code):
     if player_id and player_id in room['player_data']:
         player_cooldown = get_player_cooldown_remaining(room, player_id)
         if player_cooldown > 0:
-            next_penalty = get_cooldown_penalty(room, player_id)
+            # Calculer la pénalité pour le prochain mot (cooldown actuel + 10s)
+            next_penalty = get_cooldown_penalty(player_cooldown)
     
     return jsonify({
         'success': True,

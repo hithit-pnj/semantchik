@@ -433,6 +433,26 @@
         .guess-row .points { font-weight: 600; color: var(--success); min-width: 45px; text-align: right; }
         .guess-row .points.negative { color: var(--danger); }
         
+        /* Badge "Meilleur mot" */
+        .best-word-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a1a1a;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-radius: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .best-word-badge::before {
+            content: "👑";
+            font-size: 0.7rem;
+        }
+        
         .empty-msg {
             text-align: center;
             padding: 40px 24px;
@@ -594,6 +614,8 @@
                     <div class="cooldown-rules">
                         <div class="title">⏳ Cooldown (+10s par mot, s'additionnent !)</div>
                         <div>0-10s: <strong class="pts malus">-1</strong> · 10-20s: <strong class="pts malus">-2</strong> · 20-30s: <strong class="pts malus">-4</strong> · 30-40s: <strong class="pts malus">-8</strong>...</div>
+                        <div style="margin-top: 8px; color: #f59e0b; font-weight: 600;">👑 Meilleur mot = <strong class="pts bonus">+10</strong> + reset cooldown</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">(si tous les joueurs ont joué au moins 1 mot)</div>
                         <div style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">⚠️ Un nouveau joueur = partie redémarrée</div>
                     </div>
                 </div>
@@ -1173,13 +1195,14 @@
                     const pointsPrefix = g.total_points >= 0 ? '+' : '';
                     
                     const attemptNum = insertionOrder[g.word];
+                    const bestWordBadge = g.is_best_word ? '<span class="best-word-badge">Best</span>' : '';
                     
                     guessesList.innerHTML += `
                         <div class="guess-row ${tempClass}${latestClass}">
                             <span class="attempt-num">#${attemptNum}</span>
                             <span class="icon">${g.indicator}</span>
                             <span class="rank">${g.rank}</span>
-                            <span class="word">${g.word}</span>
+                            <span class="word">${g.word}${bestWordBadge}</span>
                             <span class="player">${g.player_name}</span>
                             <span class="points ${pointsClass}">${pointsPrefix}${g.total_points}</span>
                         </div>

@@ -132,6 +132,20 @@ def get_cooldown_penalty(cooldown_time):
     tranche = int(cooldown_time / COOLDOWN_DURATION)
     return BASE_PENALTY * (2 ** tranche)
 
+BEST_WORD_BONUS = 10  # Bonus pour avoir trouvé le meilleur mot
+
+def check_all_players_have_guessed(room):
+    """Vérifie si tous les joueurs ont fait au moins une tentative."""
+    players_with_guesses = set(g['player_id'] for g in room['guesses'])
+    all_players = set(room['players'].keys())
+    return all_players == players_with_guesses and len(all_players) > 0
+
+def get_current_best_rank(room):
+    """Retourne le meilleur rang actuel (le plus bas) parmi les tentatives."""
+    if not room['guesses']:
+        return None
+    return min(g['rank'] for g in room['guesses'])
+
 def start_new_round(room):
     """Démarre une nouvelle manche dans le salon."""
     now = time.time()
@@ -342,12 +356,27 @@ def make_guess():
     
     rank = ranks_for_secret[word]
     
+    # === VÉRIFIER SI C'EST LE MEILLEUR MOT ===
+    # La règle s'applique seulement si tous les joueurs ont fait au moins 1 tentative
+    is_best_word = False
+    best_word_bonus = 0
+    current_best_rank = get_current_best_rank(room)
+    
+    if check_all_players_have_guessed(room) and current_best_rank is not None:
+        # Vérifier si ce mot bat le record actuel (rang plus bas = meilleur)
+        if rank < current_best_rank:
+            is_best_word = True
+            best_word_bonus = BEST_WORD_BONUS
+    
     # Vérifier le cooldown
     cooldown_remaining = get_player_cooldown_remaining(room, player_id)
     is_in_cooldown = cooldown_remaining > 0
     cooldown_penalty = 0
     
-    if is_in_cooldown:
+    if is_best_word:
+        # MEILLEUR MOT : pas de cooldown, reset total !
+        room['player_data'][player_id]['current_cooldown_end'] = 0
+    elif is_in_cooldown:
         # Appliquer la pénalité basée sur le temps de cooldown accumulé
         cooldown_penalty = get_cooldown_penalty(cooldown_remaining)
         # ADDITIONNER le cooldown : ajouter 10s au cooldown restant
@@ -358,7 +387,7 @@ def make_guess():
     
     # Calculer les points
     base_points = calculate_points(rank)
-    total_points = base_points - cooldown_penalty
+    total_points = base_points - cooldown_penalty + best_word_bonus
     indicator = get_indicator(rank)
     
     # Enregistrer la tentative
@@ -367,11 +396,13 @@ def make_guess():
         'rank': rank,
         'base_points': base_points,
         'cooldown_penalty': cooldown_penalty,
+        'best_word_bonus': best_word_bonus,
         'total_points': total_points,
         'indicator': indicator,
         'player_id': player_id,
         'player_name': room['players'][player_id],
         'was_in_cooldown': is_in_cooldown,
+        'is_best_word': is_best_word,
         'timestamp': time.time()
     }
     room['guesses'].append(guess_data)
@@ -392,10 +423,12 @@ def make_guess():
         'rank': rank,
         'base_points': base_points,
         'cooldown_penalty': cooldown_penalty,
+        'best_word_bonus': best_word_bonus,
         'total_points': total_points,
         'indicator': indicator,
         'found': found,
         'was_in_cooldown': is_in_cooldown,
+        'is_best_word': is_best_word,
         'secret_word': room['secret_word'] if found else None,
         'new_cooldown': new_cooldown
     })
@@ -494,5 +527,6 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"\n[SEMANTCHIK] Mode TEMPS RÉEL - Port {port}")
     print(f"   Timer mot: {ROUND_TIME_LIMIT}s")
-    print(f"   Cooldown: {COOLDOWN_DURATION}s | Pénalités: -{BASE_PENALTY}, -{BASE_PENALTY*2}, -{BASE_PENALTY*4}...\n")
+    print(f"   Cooldown: {COOLDOWN_DURATION}s | Pénalités: -{BASE_PENALTY}, -{BASE_PENALTY*2}, -{BASE_PENALTY*4}...")
+    print(f"   Bonus meilleur mot: +{BEST_WORD_BONUS} pts + reset cooldown\n")
     app.run(host='0.0.0.0', port=port, debug=True)
